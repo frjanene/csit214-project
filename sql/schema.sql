@@ -1,0 +1,47 @@
+
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS airports;
+DROP TABLE IF EXISTS lounges;
+DROP TABLE IF EXISTS bookings;
+
+CREATE TABLE users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  first_name VARCHAR(50) NOT NULL,
+  last_name VARCHAR(50) NOT NULL,
+  email VARCHAR(120) UNIQUE NOT NULL,
+  role ENUM('member','guest','admin') DEFAULT 'member',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE airports (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  code VARCHAR(8) NOT NULL,
+  city VARCHAR(80) NOT NULL,
+  country VARCHAR(80) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE lounges (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  airport_id INT NOT NULL,
+  name VARCHAR(120) NOT NULL,
+  price_per_person DECIMAL(10,2) NOT NULL DEFAULT 55.00,
+  capacity INT NOT NULL DEFAULT 120,
+  opens TIME NOT NULL DEFAULT '05:00:00',
+  closes TIME NOT NULL DEFAULT '23:00:00',
+  FOREIGN KEY (airport_id) REFERENCES airports(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE bookings (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NULL,
+  lounge_id INT NOT NULL,
+  date DATE NOT NULL,
+  start_time TIME NOT NULL,
+  end_time TIME NOT NULL,
+  guests INT NOT NULL DEFAULT 0,
+  total_amount DECIMAL(10,2) NOT NULL,
+  status ENUM('pending','confirmed','cancelled') DEFAULT 'confirmed',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+  FOREIGN KEY (lounge_id) REFERENCES lounges(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

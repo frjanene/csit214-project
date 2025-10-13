@@ -15,6 +15,8 @@ $routes = [
   'bookings'    => 'BookingController@index',
   'memberships' => 'MembershipController@index',
   'profile'     => 'ProfileController@index',
+  'forgot'      => 'PasswordController@request',
+  'forgot_done' => 'PasswordController@sent',
 ];
 
 // Resolver

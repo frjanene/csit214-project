@@ -1,1 +1,413 @@
-/* Global scaffold styles */
+/**
+ * ===================================
+ * FlyDreamAir | Main Stylesheet
+ * ===================================
+ *
+ * 1. Setup & Globals
+ * 2. Layout
+ * 3. Reusable Components
+ * 4. Component-Specific Styles
+ * 5. Utility Classes
+ *
+ */
+
+
+/* ===================================
+   1. Setup & Globals
+   =================================== */
+
+/**
+ * Design Tokens
+ * Centralized values for colors, spacing, typography, and shadows.
+ */
+:root {
+  /* Colors */
+  --fda-primary: #030213;
+  --fda-secondary: #ECEEF2;
+  --fda-text: #030213;
+  --fda-text-muted: #717182;
+
+  /* Surfaces & Borders */
+  --fda-surface-80: rgba(255, 255, 255, .80);
+  --fda-border-10: rgba(0, 0, 0, .10);
+
+  /* Button Dimensions */
+  --fda-btn-width: 350px;
+  --fda-btn-height: 42px;
+  --fda-btn-radius: 6.75px;
+  --fda-btn-font: 11.53px;
+
+  /* Shadows */
+  --fda-shadow-1: 0 8px 10px -6px rgba(0, 0, 0, .10);
+  --fda-shadow-2: 0 20px 25px -5px rgba(0, 0, 0, .10);
+}
+
+/**
+ * Font Definitions
+ * Local 'Inter' font files.
+ */
+@font-face { font-family: "Inter"; src: url("../fonts/Inter_24pt-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Inter"; src: url("../fonts/Inter_24pt-Medium.ttf") format("truetype");  font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: "Inter"; src: url("../fonts/Inter_24pt-SemiBold.ttf") format("truetype");font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: "Inter"; src: url("../fonts/Inter_24pt-Bold.ttf") format("truetype");    font-weight: 700; font-style: normal; font-display: swap; }
+
+/**
+ * Base Styles & Resets
+ */
+html,
+body {
+  font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  color: var(--fda-text);
+}
+
+/* Globally remove Bootstrap's default blue focus ring for a custom look. */
+.form-control:focus,
+.form-check-input:focus,
+.btn:focus,
+.btn:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+
+/* ===================================
+   2. Layout
+   =================================== */
+
+/* Full-height container for welcome/auth pages with a gradient background. */
+.auth-shell {
+  min-height: 100dvh;
+  background: linear-gradient(135deg, #EEF2FF 0%, #FFFFFF 50%, #F9FAFB 100%);
+}
+
+
+/* ===================================
+   3. Reusable Components
+   =================================== */
+
+/**
+ * Component: Brand Identity
+ * Logo and wordmark combination.
+ */
+.brand-row { display: flex; align-items: center; justify-content: center; gap: .75rem; }
+.brand-logo { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
+.brand-title { font-weight: 700; font-size: 24px; line-height: 1; }
+.brand-sub { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--fda-text-muted); }
+
+/**
+ * Component: Glass Card
+ * A semi-transparent card with blur effect and shadows.
+ */
+.glass-card {
+  width: 392px;
+  min-height: 373px;
+  background: var(--fda-surface-80);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 16px;
+  box-shadow: var(--fda-shadow-1), var(--fda-shadow-2);
+}
+
+/**
+ * Component: Buttons
+ * Base styles and variants for call-to-action buttons.
+ */
+/* Base button style */
+.btn-fda {
+  width: 100%;
+  max-width: var(--fda-btn-width);
+  height: var(--fda-btn-height);
+  border-radius: var(--fda-btn-radius);
+  font-weight: 600;
+  font-size: var(--fda-btn-font);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  padding: 0 14px;
+}
+
+/* Primary variant (solid fill) */
+.btn-fda-primary { background: var(--fda-primary); color: #fff; border: none; }
+.btn-fda-primary:hover { background: #0a0a16; color: #fff; }
+
+/* Ghost variant (transparent with border) */
+.btn-fda-ghost { background: transparent; color: var(--fda-text); border: 1px solid var(--fda-border-10); }
+.btn-fda-ghost:hover { background: #fafafa; }
+
+/* Secondary variant (light gray fill) */
+.btn-fda-secondary { background: var(--fda-secondary); color: var(--fda-text); border: none; }
+.btn-fda-secondary:hover { filter: brightness(.97); }
+
+/* Plain link-style button (no border or background) */
+.btn-link-plain {
+  background: transparent;
+  border: none;
+  color: var(--fda-primary);
+  font-weight: 600;
+  padding: .25rem 0;
+  text-decoration: none;
+}
+.btn-link-plain:hover { text-decoration: underline; }
+
+/**
+ * Component: Custom Form Inputs
+ */
+.fda-input-wrap { position: relative; }
+.fda-input {
+  height: 31.5px !important;
+  padding: 6px 40px 6px 12px; /* Right padding for icon */
+  border-radius: 8px;
+  border: 1px solid var(--fda-border-10);
+  background: #ECEEF2;
+  font-size: 13px;
+}
+.fda-input::placeholder { color: #9CA3AF; }
+.fda-input:focus {
+  background: #ECEEF2;
+  border-color: var(--fda-border-10); /* Maintain neutral focus state */
+}
+
+/* Password visibility toggle button */
+.toggle-pass {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  padding: 0;
+  line-height: 1;
+  color: #8A8F98;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.toggle-pass:focus { outline: none; box-shadow: none; }
+
+/**
+ * Component: Dividers
+ */
+/* Text divider with lines, e.g., "or" */
+.hr-or { display: flex; align-items: center; gap: .75rem; color: var(--fda-text-muted); font-size: 12px; }
+.hr-or::before,
+.hr-or::after { content: ""; flex: 1; height: 1px; background: var(--fda-border-10); }
+
+/* Standard horizontal rule */
+.glass-hr { border: 0; border-top: 1px solid var(--fda-border-10); opacity: 1; }
+
+/**
+ * Component: Notification Box
+ * A styled container for informational messages.
+ */
+.note-info {
+  background: #DBEAFE; /* Tailwind blue-100 */
+  border: 1px solid #BEDBFF; /* Tailwind blue-200 */
+  color: var(--fda-text-muted);
+  border-radius: 10px;
+  padding: 14px;
+  font-size: 10px;
+}
+
+/**
+ * Component: Iconography
+ */
+/* Green circle for success checkmark */
+.icon-check-circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #DCFCE7; /* light green */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.icon-check-circle .icon-check {
+  width: 28px;
+  height: 28px;
+  /* CSS filter to approximate a specific green (#00A63E) */
+  filter: brightness(0) saturate(100%) invert(44%) sepia(88%) saturate(521%) hue-rotate(88deg) brightness(93%) contrast(93%);
+}
+
+/* Utility to color an SVG with the primary text color */
+.svg-primary {
+  filter: brightness(0) saturate(100%);
+  vertical-align: -1px;
+}
+
+
+/* ===================================
+   4. Component-Specific Styles
+   =================================== */
+
+/**
+ * Component: Authentication Modal
+ * Self-contained styles for the sign-in/sign-up modal.
+ */
+.auth-modal-dialog { max-width: 392px; }
+.auth-modal {
+  background: #FFFFFF;
+  border: none;
+  border-radius: 16px;
+  box-shadow: var(--fda-shadow-1), var(--fda-shadow-2);
+}
+
+/* Tab navigation rail */
+.auth-tab-rail {
+  background: #ECEEF2;
+  height: 31.5px;
+  border-radius: 999px;
+  padding: 3px; /* Creates an inset effect for the active tab */
+}
+.auth-tabs {
+  height: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 6px;
+  margin: 0;
+}
+.auth-tabs .nav-item { width: 100%; }
+.auth-tabs .nav-link {
+  width: 100%;
+  height: 25.5px;
+  line-height: 25.5px;
+  border-radius: 999px;
+  padding: 0 .5rem;
+  background: transparent;
+  color: var(--fda-text);
+  font-weight: 600;
+  font-size: 12px;
+  text-align: center;
+}
+.auth-tabs .nav-link.active,
+.nav-pills .nav-link.active,
+.nav-pills .show > .nav-link {
+  background: #FFFFFF;
+  color: var(--fda-primary);
+}
+
+/* Links within the auth modal */
+.auth-links .forgot { color: var(--fda-primary); text-decoration: none; }
+.auth-links .forgot:hover { text-decoration: underline; }
+
+/* Buttons specifically for the auth modal form */
+.btn-auth {
+  height: 32px;
+  border-radius: 6.75px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.btn-auth-primary { background: var(--fda-primary); color: #fff; border: none; }
+.btn-auth-primary:hover { background: #0a0a16; color: #fff; }
+
+
+/* ===================================
+   5. Utility Classes
+   =================================== */
+
+/**
+ * Typography Utilities
+ */
+.welcome-title { font-weight: 700; font-size: 30px; }
+.welcome-sub { color: var(--fda-text-muted); font-size: 13px; }
+.demo-note { color: #90A1B9; font-size: 9.84px; }
+.text-muted-2 { color: var(--fda-text-muted); }
+
+/**
+ * "Why Choose Us" Section Specifics
+ * These are scoped to a particular content area.
+ */
+.why-title { color: #314158; font-weight: 600; font-size: 13px; }
+.why-list { max-width: 520px; }
+.why-item { font-size: 11px; color: #717182; }
+
+/* Colored bullet points */
+.bullet { width: .55rem; height: .55rem; border-radius: 50%; display: inline-block; margin-right: .5rem; transform: translateY(1px); }
+.bullet-blue { background: #2B7FFF; }
+.bullet-green { background: #00C950; }
+.bullet-purple { background: #AD46FF; }
+
+
+/* ===== Header ===== */
+.header-bar{
+  border-bottom: 1px solid var(--fda-border-10);  /* 10% black */
+}
+/* make header a bit taller */
+.header-bar .container{
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+/* Brand lockup: add a touch more space between lines */
+.brand-stack .brand-title{ line-height: 1.1; }
+.brand-stack .brand-sub{ margin-top: 3px; }
+
+/* Nav pills */
+.app-nav{
+  display: flex;
+  gap: 18px;                         /* more space between nav items */
+}
+.app-nav .nav-link{
+  color: var(--fda-primary);
+  font-weight: 600;
+}
+
+/* Ensure active pill text is white (anchor + nested spans) */
+.app-pill.active,
+.app-pill.active span,
+.app-pill.active:focus,
+.app-pill.active:hover {
+  color: #fff !important;
+}
+
+.app-pill{
+  display:flex; align-items:center; gap:.5rem;
+  padding: .5rem 1rem;               /* increased padding for better hit area */
+  border-radius: .6rem;
+  transition: background .15s ease, color .15s ease;
+}
+.app-pill .nav-icon{
+  width:16px; height:16px;
+  /* tint monochrome SVGs to primary */
+  filter: brightness(0) saturate(100%);
+}
+.app-pill:hover{ background: rgba(0,0,0,.04); }
+
+/* Active state: primary background, white text & icon */
+.app-pill.active{
+  background: var(--fda-primary);
+  color:#fff;
+}
+.app-pill.active .nav-icon{
+  filter: invert(1);  /* turn icon white */
+}
+.app-pill.active:hover{ background: var(--fda-primary); }
+
+/* Membership badge */
+.member-badge{
+  background:#DCFCE7;
+  border:1px solid #BEDBFF;
+  color:#193CB8;
+  font-weight:600;
+  font-size:12px;
+  padding:.25rem .6rem;
+  border-radius:999px;
+}
+
+/* Avatar with initials */
+.avatar-initials{
+  width:36px; height:36px; border-radius:50%;
+  background:#DCFCE7;
+  color: var(--fda-primary);
+  display:inline-flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:12px;
+}
+
+/* Keep brand-sub consistent in header */
+.navbar .brand-sub{
+  font-size:12px; letter-spacing:.12em; text-transform:uppercase;
+  color: var(--fda-text-muted);
+}
+
+

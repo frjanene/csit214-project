@@ -1,20 +1,57 @@
+<?php
+  // Simple active helper using the router's query param
+  $current = $_GET['r'] ?? 'dashboard';
+  $is = fn($route) => $current === $route ? 'active' : '';
+?>
+<nav class="navbar navbar-expand-lg header-bar bg-white">
+  <div class="container align-items-center">
 
-<nav class="navbar navbar-expand-lg bg-white border-bottom shadow-sm">
-  <div class="container">
-    <a class="navbar-brand fw-bold" href="<?= base_href('dashboard') ?>">FlyDreamAir</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+    <!-- Brand -->
+    <a class="navbar-brand d-flex align-items-center gap-2" href="<?= base_href('dashboard') ?>">
+      <img src="assets/img/logo.svg" alt="FlyDreamAir" class="brand-logo" width="40" height="40">
+      <div class="d-flex flex-column brand-stack">
+        <span class="fw-bold brand-title">FlyDreamAir</span>
+        <small class="brand-sub">Premium Lounges</small>
+      </div>
+    </a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
       <span class="navbar-toggler-icon"></span>
     </button>
-    <div class="collapse navbar-collapse" id="nav">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item"><a class="nav-link" href="<?= base_href('dashboard') ?>">Dashboard</a></li>
-        <li class="nav-item"><a class="nav-link" href="<?= base_href('find') ?>">Find Lounges</a></li>
-        <li class="nav-item"><a class="nav-link" href="<?= base_href('bookings') ?>">My Bookings</a></li>
-        <li class="nav-item"><a class="nav-link" href="<?= base_href('memberships') ?>">Memberships</a></li>
-        <li class="nav-item"><a class="nav-link" href="<?= base_href('profile') ?>">Profile</a></li>
+
+    <div class="collapse navbar-collapse" id="mainNav">
+      <!-- Primary nav -->
+      <ul class="navbar-nav app-nav ms-3 me-auto">
+        <li class="nav-item">
+          <a class="nav-link app-pill <?= $is('dashboard') ?>" href="<?= base_href('dashboard') ?>">
+            <img class="nav-icon" src="assets/img/dashboard-icon.svg" alt="">
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link app-pill <?= $is('find') ?>" href="<?= base_href('find') ?>">
+            <img class="nav-icon" src="assets/img/search-icon.svg" alt="">
+            <span>Find Lounges</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link app-pill <?= $is('bookings') ?>" href="<?= base_href('bookings') ?>">
+            <img class="nav-icon" src="assets/img/booking-icon.svg" alt="">
+            <span>My Bookings</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link app-pill <?= $is('memberships') ?>" href="<?= base_href('memberships') ?>">
+            <img class="nav-icon" src="assets/img/membership-icon.svg" alt="">
+            <span>Membership</span>
+          </a>
+        </li>
       </ul>
-      <div class="d-flex gap-2">
-        <a class="btn btn-outline-secondary btn-sm" href="<?= base_href('welcome') ?>">Exit</a>
+
+      <!-- Right side: membership badge + avatar -->
+      <div class="d-flex align-items-center gap-3">
+        <span class="member-badge">BASIC Member</span>
+        <span class="avatar-initials">JS</span>
       </div>
     </div>
   </div>

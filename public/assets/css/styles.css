@@ -1,413 +1,274 @@
-/**
- * ===================================
- * FlyDreamAir | Main Stylesheet
- * ===================================
- *
- * 1. Setup & Globals
- * 2. Layout
- * 3. Reusable Components
- * 4. Component-Specific Styles
- * 5. Utility Classes
- *
- */
+/* ==========================================================================
+   FlyDreamAir — Main Styles
+   ========================================================================== */
 
+/* ========== 1) Tokens & Base ========== */
+:root{
+  --fda-primary:#030213;
+  --fda-secondary:#ECEEF2;
+  --fda-text:#030213;
+  --fda-text-muted:#717182;
 
-/* ===================================
-   1. Setup & Globals
-   =================================== */
+  --fda-surface-80:rgba(255,255,255,.80);
+  --fda-border-10:rgba(0,0,0,.10);
 
-/**
- * Design Tokens
- * Centralized values for colors, spacing, typography, and shadows.
- */
-:root {
-  /* Colors */
-  --fda-primary: #030213;
-  --fda-secondary: #ECEEF2;
-  --fda-text: #030213;
-  --fda-text-muted: #717182;
+  --fda-btn-width:350px;
+  --fda-btn-height:42px;
+  --fda-btn-radius:6.75px;
+  --fda-btn-font:11.53px;
 
-  /* Surfaces & Borders */
-  --fda-surface-80: rgba(255, 255, 255, .80);
-  --fda-border-10: rgba(0, 0, 0, .10);
-
-  /* Button Dimensions */
-  --fda-btn-width: 350px;
-  --fda-btn-height: 42px;
-  --fda-btn-radius: 6.75px;
-  --fda-btn-font: 11.53px;
-
-  /* Shadows */
-  --fda-shadow-1: 0 8px 10px -6px rgba(0, 0, 0, .10);
-  --fda-shadow-2: 0 20px 25px -5px rgba(0, 0, 0, .10);
+  --fda-shadow-1:0 8px 10px -6px rgba(0,0,0,.10);
+  --fda-shadow-2:0 20px 25px -5px rgba(0,0,0,.10);
 }
 
-/**
- * Font Definitions
- * Local 'Inter' font files.
- */
-@font-face { font-family: "Inter"; src: url("../fonts/Inter_24pt-Regular.ttf") format("truetype"); font-weight: 400; font-style: normal; font-display: swap; }
-@font-face { font-family: "Inter"; src: url("../fonts/Inter_24pt-Medium.ttf") format("truetype");  font-weight: 500; font-style: normal; font-display: swap; }
-@font-face { font-family: "Inter"; src: url("../fonts/Inter_24pt-SemiBold.ttf") format("truetype");font-weight: 600; font-style: normal; font-display: swap; }
-@font-face { font-family: "Inter"; src: url("../fonts/Inter_24pt-Bold.ttf") format("truetype");    font-weight: 700; font-style: normal; font-display: swap; }
+@font-face{font-family:"Inter";src:url("../fonts/Inter_24pt-Regular.ttf") format("truetype");font-weight:400;font-style:normal;font-display:swap;}
+@font-face{font-family:"Inter";src:url("../fonts/Inter_24pt-Medium.ttf")  format("truetype");font-weight:500;font-style:normal;font-display:swap;}
+@font-face{font-family:"Inter";src:url("../fonts/Inter_24pt-SemiBold.ttf")format("truetype");font-weight:600;font-style:normal;font-display:swap;}
+@font-face{font-family:"Inter";src:url("../fonts/Inter_24pt-Bold.ttf")    format("truetype");font-weight:700;font-style:normal;font-display:swap;}
 
-/**
- * Base Styles & Resets
- */
-html,
-body {
-  font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-  color: var(--fda-text);
+html,body{
+  font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  color:var(--fda-text);
 }
 
-/* Globally remove Bootstrap's default blue focus ring for a custom look. */
 .form-control:focus,
 .form-check-input:focus,
 .btn:focus,
-.btn:focus-visible {
-  outline: none !important;
-  box-shadow: none !important;
+.btn:focus-visible{outline:none!important;box-shadow:none!important;}
+
+/* ========== 2) Layout ========== */
+.auth-shell{min-height:100dvh;background:linear-gradient(135deg,#EEF2FF 0%,#FFF 50%,#F9FAFB 100%);}
+.page-shell{min-height:100dvh;background:#fff;}
+h5{font-weight:500;font-size:18px;}
+
+/* ========== 3) Reusable Components ========== */
+.brand-row{display:flex;align-items:center;justify-content:center;gap:.75rem;}
+.brand-logo{width:48px;height:48px;border-radius:50%;object-fit:cover;}
+.brand-title{font-weight:700;font-size:24px;line-height:1;}
+.brand-sub{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--fda-text-muted);}
+
+.glass-card{
+  width:392px;min-height:373px;background:var(--fda-surface-80);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border-radius:16px;box-shadow:var(--fda-shadow-1),var(--fda-shadow-2);
 }
 
+.btn-fda{
+  width:100%;max-width:var(--fda-btn-width);height:var(--fda-btn-height);
+  border-radius:var(--fda-btn-radius);font-weight:600;font-size:var(--fda-btn-font);
+  display:flex;align-items:center;justify-content:center;gap:.5rem;padding:0 14px;
+}
+.btn-fda-primary{background:var(--fda-primary);color:#fff;border:none;}
+.btn-fda-primary:hover{background:#0a0a16;color:#fff;}
+.btn-fda-ghost{background:transparent;color:var(--fda-text);border:1px solid var(--fda-border-10);}
+.btn-fda-ghost:hover{background:#fafafa;}
+.btn-fda-secondary{background:var(--fda-secondary);color:var(--fda-text);border:none;}
+.btn-fda-secondary:hover{filter:brightness(.97);}
+.btn-link-plain{background:transparent;border:none;color:var(--fda-primary);font-weight:600;padding:.25rem 0;text-decoration:none;}
+.btn-link-plain:hover{text-decoration:underline;}
+.btn-fda-fit{width:auto!important;max-width:none!important;display:inline-flex;}
+.btn-fda-primary:disabled{opacity:.55;cursor:not-allowed;}
 
-/* ===================================
-   2. Layout
-   =================================== */
-
-/* Full-height container for welcome/auth pages with a gradient background. */
-.auth-shell {
-  min-height: 100dvh;
-  background: linear-gradient(135deg, #EEF2FF 0%, #FFFFFF 50%, #F9FAFB 100%);
+.fda-input-wrap{position:relative;}
+.fda-input{
+  height:31.5px!important;padding:6px 40px 6px 12px;border-radius:8px;border:1px solid var(--fda-border-10);
+  background:#ECEEF2;font-size:13px;
+}
+.fda-input::placeholder{color:#9CA3AF;}
+.fda-input:focus{background:#ECEEF2;border-color:var(--fda-border-10);}
+.toggle-pass{
+  position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  border:none;background:transparent;padding:0;line-height:1;color:#8A8F98;cursor:pointer;display:flex;align-items:center;justify-content:center;
 }
 
+.hr-or{display:flex;align-items:center;gap:.75rem;color:var(--fda-text-muted);font-size:12px;}
+.hr-or::before,.hr-or::after{content:"";flex:1;height:1px;background:var(--fda-border-10);}
+.glass-hr{border:0;border-top:1px solid var(--fda-border-10);opacity:1;}
 
-/* ===================================
-   3. Reusable Components
-   =================================== */
+.note-info{color:var(--fda-text-muted);}
 
-/**
- * Component: Brand Identity
- * Logo and wordmark combination.
- */
-.brand-row { display: flex; align-items: center; justify-content: center; gap: .75rem; }
-.brand-logo { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
-.brand-title { font-weight: 700; font-size: 24px; line-height: 1; }
-.brand-sub { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--fda-text-muted); }
-
-/**
- * Component: Glass Card
- * A semi-transparent card with blur effect and shadows.
- */
-.glass-card {
-  width: 392px;
-  min-height: 373px;
-  background: var(--fda-surface-80);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border-radius: 16px;
-  box-shadow: var(--fda-shadow-1), var(--fda-shadow-2);
+.icon-check-circle{
+  width:56px;height:56px;border-radius:50%;background:#DCFCE7;display:flex;align-items:center;justify-content:center;
+}
+.icon-check-circle .icon-check{
+  width:28px;height:28px;
+  filter:brightness(0) saturate(100%) invert(44%) sepia(88%) saturate(521%) hue-rotate(88deg) brightness(93%) contrast(93%);
 }
 
-/**
- * Component: Buttons
- * Base styles and variants for call-to-action buttons.
- */
-/* Base button style */
-.btn-fda {
-  width: 100%;
-  max-width: var(--fda-btn-width);
-  height: var(--fda-btn-height);
-  border-radius: var(--fda-btn-radius);
-  font-weight: 600;
-  font-size: var(--fda-btn-font);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: .5rem;
-  padding: 0 14px;
+.svg-primary{filter:brightness(0) saturate(100%);vertical-align:-1px;}
+.inline-icon{width:16px;height:16px;vertical-align:-2px;}
+.tint-muted{filter:invert(43%) sepia(6%) saturate(356%) hue-rotate(197deg) brightness(92%) contrast(88%);}
+
+/* ========== 4) Auth ========== */
+.auth-modal-dialog{max-width:392px;}
+.auth-modal{background:#fff;border:none;border-radius:16px;box-shadow:var(--fda-shadow-1),var(--fda-shadow-2);}
+
+.auth-tab-rail{background:#ECEEF2;height:31.5px;border-radius:999px;padding:3px;}
+.auth-tabs{height:100%;display:grid;grid-template-columns:1fr 1fr;column-gap:6px;margin:0;}
+.auth-tabs .nav-item{width:100%;}
+.auth-tabs .nav-link{
+  width:100%;height:25.5px;line-height:25.5px;border-radius:999px;padding:0 .5rem;background:transparent;
+  color:var(--fda-text);font-weight:600;font-size:12px;text-align:center;
 }
+.auth-tabs .nav-link.active,.nav-pills .nav-link.active,.nav-pills .show>.nav-link{background:#fff;color:var(--fda-primary);}
+.auth-links .forgot{color:var(--fda-primary);text-decoration:none;}
+.auth-links .forgot:hover{text-decoration:underline;}
+.btn-auth{height:32px;border-radius:6.75px;font-size:12px;font-weight:600;}
+.btn-auth-primary{background:var(--fda-primary);color:#fff;border:none;}
+.btn-auth-primary:hover{background:#0a0a16;color:#fff;}
 
-/* Primary variant (solid fill) */
-.btn-fda-primary { background: var(--fda-primary); color: #fff; border: none; }
-.btn-fda-primary:hover { background: #0a0a16; color: #fff; }
-
-/* Ghost variant (transparent with border) */
-.btn-fda-ghost { background: transparent; color: var(--fda-text); border: 1px solid var(--fda-border-10); }
-.btn-fda-ghost:hover { background: #fafafa; }
-
-/* Secondary variant (light gray fill) */
-.btn-fda-secondary { background: var(--fda-secondary); color: var(--fda-text); border: none; }
-.btn-fda-secondary:hover { filter: brightness(.97); }
-
-/* Plain link-style button (no border or background) */
-.btn-link-plain {
-  background: transparent;
-  border: none;
-  color: var(--fda-primary);
-  font-weight: 600;
-  padding: .25rem 0;
-  text-decoration: none;
-}
-.btn-link-plain:hover { text-decoration: underline; }
-
-/**
- * Component: Custom Form Inputs
- */
-.fda-input-wrap { position: relative; }
-.fda-input {
-  height: 31.5px !important;
-  padding: 6px 40px 6px 12px; /* Right padding for icon */
-  border-radius: 8px;
-  border: 1px solid var(--fda-border-10);
-  background: #ECEEF2;
-  font-size: 13px;
-}
-.fda-input::placeholder { color: #9CA3AF; }
-.fda-input:focus {
-  background: #ECEEF2;
-  border-color: var(--fda-border-10); /* Maintain neutral focus state */
-}
-
-/* Password visibility toggle button */
-.toggle-pass {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  border: none;
-  background: transparent;
-  padding: 0;
-  line-height: 1;
-  color: #8A8F98;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.toggle-pass:focus { outline: none; box-shadow: none; }
-
-/**
- * Component: Dividers
- */
-/* Text divider with lines, e.g., "or" */
-.hr-or { display: flex; align-items: center; gap: .75rem; color: var(--fda-text-muted); font-size: 12px; }
-.hr-or::before,
-.hr-or::after { content: ""; flex: 1; height: 1px; background: var(--fda-border-10); }
-
-/* Standard horizontal rule */
-.glass-hr { border: 0; border-top: 1px solid var(--fda-border-10); opacity: 1; }
-
-/**
- * Component: Notification Box
- * A styled container for informational messages.
- */
-.note-info {
-  background: #DBEAFE; /* Tailwind blue-100 */
-  border: 1px solid #BEDBFF; /* Tailwind blue-200 */
-  color: var(--fda-text-muted);
-  border-radius: 10px;
-  padding: 14px;
-  font-size: 10px;
-}
-
-/**
- * Component: Iconography
- */
-/* Green circle for success checkmark */
-.icon-check-circle {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: #DCFCE7; /* light green */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.icon-check-circle .icon-check {
-  width: 28px;
-  height: 28px;
-  /* CSS filter to approximate a specific green (#00A63E) */
-  filter: brightness(0) saturate(100%) invert(44%) sepia(88%) saturate(521%) hue-rotate(88deg) brightness(93%) contrast(93%);
-}
-
-/* Utility to color an SVG with the primary text color */
-.svg-primary {
-  filter: brightness(0) saturate(100%);
-  vertical-align: -1px;
-}
-
-
-/* ===================================
-   4. Component-Specific Styles
-   =================================== */
-
-/**
- * Component: Authentication Modal
- * Self-contained styles for the sign-in/sign-up modal.
- */
-.auth-modal-dialog { max-width: 392px; }
-.auth-modal {
-  background: #FFFFFF;
-  border: none;
-  border-radius: 16px;
-  box-shadow: var(--fda-shadow-1), var(--fda-shadow-2);
-}
-
-/* Tab navigation rail */
-.auth-tab-rail {
-  background: #ECEEF2;
-  height: 31.5px;
-  border-radius: 999px;
-  padding: 3px; /* Creates an inset effect for the active tab */
-}
-.auth-tabs {
-  height: 100%;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: 6px;
-  margin: 0;
-}
-.auth-tabs .nav-item { width: 100%; }
-.auth-tabs .nav-link {
-  width: 100%;
-  height: 25.5px;
-  line-height: 25.5px;
-  border-radius: 999px;
-  padding: 0 .5rem;
-  background: transparent;
-  color: var(--fda-text);
-  font-weight: 600;
-  font-size: 12px;
-  text-align: center;
-}
-.auth-tabs .nav-link.active,
-.nav-pills .nav-link.active,
-.nav-pills .show > .nav-link {
-  background: #FFFFFF;
-  color: var(--fda-primary);
-}
-
-/* Links within the auth modal */
-.auth-links .forgot { color: var(--fda-primary); text-decoration: none; }
-.auth-links .forgot:hover { text-decoration: underline; }
-
-/* Buttons specifically for the auth modal form */
-.btn-auth {
-  height: 32px;
-  border-radius: 6.75px;
-  font-size: 12px;
-  font-weight: 600;
-}
-.btn-auth-primary { background: var(--fda-primary); color: #fff; border: none; }
-.btn-auth-primary:hover { background: #0a0a16; color: #fff; }
-
-
-/* ===================================
-   5. Utility Classes
-   =================================== */
-
-/**
- * Typography Utilities
- */
-.welcome-title { font-weight: 700; font-size: 30px; }
-.welcome-sub { color: var(--fda-text-muted); font-size: 13px; }
-.demo-note { color: #90A1B9; font-size: 9.84px; }
-.text-muted-2 { color: var(--fda-text-muted); }
-
-/**
- * "Why Choose Us" Section Specifics
- * These are scoped to a particular content area.
- */
-.why-title { color: #314158; font-weight: 600; font-size: 13px; }
-.why-list { max-width: 520px; }
-.why-item { font-size: 11px; color: #717182; }
-
-/* Colored bullet points */
-.bullet { width: .55rem; height: .55rem; border-radius: 50%; display: inline-block; margin-right: .5rem; transform: translateY(1px); }
-.bullet-blue { background: #2B7FFF; }
-.bullet-green { background: #00C950; }
-.bullet-purple { background: #AD46FF; }
-
-
-/* ===== Header ===== */
-.header-bar{
-  border-bottom: 1px solid var(--fda-border-10);  /* 10% black */
-}
-/* make header a bit taller */
-.header-bar .container{
-  padding-top: 16px;
-  padding-bottom: 16px;
-}
-
-/* Brand lockup: add a touch more space between lines */
-.brand-stack .brand-title{ line-height: 1.1; }
-.brand-stack .brand-sub{ margin-top: 3px; }
-
-/* Nav pills */
-.app-nav{
-  display: flex;
-  gap: 18px;                         /* more space between nav items */
-}
-.app-nav .nav-link{
-  color: var(--fda-primary);
-  font-weight: 600;
-}
-
-/* Ensure active pill text is white (anchor + nested spans) */
-.app-pill.active,
-.app-pill.active span,
-.app-pill.active:focus,
-.app-pill.active:hover {
-  color: #fff !important;
-}
-
-.app-pill{
-  display:flex; align-items:center; gap:.5rem;
-  padding: .5rem 1rem;               /* increased padding for better hit area */
-  border-radius: .6rem;
-  transition: background .15s ease, color .15s ease;
-}
-.app-pill .nav-icon{
-  width:16px; height:16px;
-  /* tint monochrome SVGs to primary */
-  filter: brightness(0) saturate(100%);
-}
-.app-pill:hover{ background: rgba(0,0,0,.04); }
-
-/* Active state: primary background, white text & icon */
-.app-pill.active{
-  background: var(--fda-primary);
-  color:#fff;
-}
-.app-pill.active .nav-icon{
-  filter: invert(1);  /* turn icon white */
-}
-.app-pill.active:hover{ background: var(--fda-primary); }
-
-/* Membership badge */
-.member-badge{
-  background:#DCFCE7;
-  border:1px solid #BEDBFF;
-  color:#193CB8;
-  font-weight:600;
-  font-size:12px;
-  padding:.25rem .6rem;
-  border-radius:999px;
-}
-
-/* Avatar with initials */
+/* ========== 5) Header/Nav ========== */
+.header-bar{border-bottom:1px solid var(--fda-border-10);}
+.header-bar .container{padding:10px 0;}
+.brand-stack .brand-title{line-height:1.1;}
+.brand-stack .brand-sub{margin-top:3px;}
+.app-nav{display:flex;gap:0;}
+.app-nav .nav-link{color:var(--fda-primary);font-weight:500;padding-right:20px!important;padding-left:20px!important;}
+.app-pill{display:flex;align-items:center;gap:.5rem;padding:.5rem 1rem;border-radius:.6rem;transition:background .15s ease,color .15s ease;}
+.app-pill .nav-icon{width:16px;height:16px;filter:brightness(0) saturate(100%);}
+.app-pill:hover{background:rgba(0,0,0,.04);}
+.app-pill.active{background:var(--fda-primary);color:#fff;}
+.app-pill.active .nav-icon{filter:invert(1);}
+.app-pill.active:hover{background:var(--fda-primary);}
+.app-pill.active,.app-pill.active span,.app-pill.active:focus,.app-pill.active:hover{color:#fff!important;}
+.member-badge{background:#DCFCE7;border:1px solid #BEDBFF;color:#193CB8;font-weight:600;font-size:12px;padding:.25rem .6rem;border-radius:999px;}
 .avatar-initials{
-  width:36px; height:36px; border-radius:50%;
-  background:#DCFCE7;
-  color: var(--fda-primary);
-  display:inline-flex; align-items:center; justify-content:center;
-  font-weight:700; font-size:12px;
+  width:36px;height:36px;border-radius:50%;background:#DCFCE7;color:var(--fda-primary);
+  display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;
+}
+.navbar .brand-sub{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--fda-text-muted);}
+
+/* ========== 6) Dashboard Cards ========== */
+.metric-card{border:1px solid var(--fda-border-10);border-radius:12px;}
+.metric-card .card-body{position:relative;padding:18px 64px 18px 18px;}
+.metric-icon{position:absolute;right:18px;top:50%;transform:translateY(-50%);width:32px;height:32px;}
+.panel-card{border:1px solid var(--fda-border-10);border-radius:14px;}
+.panel-card .card-body{padding:20px;}
+.visit-item{border:1px solid var(--fda-border-10);border-radius:12px;}
+.visit-item .card-body{position:relative;padding:16px 18px;}
+.visit-item .status-pill{position:absolute;right:18px;top:50%;transform:translateY(-50%);}
+
+.status-pill{display:inline-flex;align-items:center;justify-content:center;padding:.15rem .55rem;border-radius:999px;font-size:12px;font-weight:600;border:1px solid transparent;}
+.status-ok{background:#DCFCE7;border-color:#B9F8CF;color:#016630;}
+.btn-outline-plain{border:1px solid var(--fda-border-10);background:transparent;color:var(--fda-primary);font-weight:600;}
+.btn-outline-plain:hover{background:rgba(0,0,0,.02);color:var(--fda-primary);}
+.tint-blue{filter:invert(23%) sepia(83%) saturate(3533%) hue-rotate(214deg) brightness(96%) contrast(101%);}
+.tint-purple{filter:invert(18%) sepia(79%) saturate(7462%) hue-rotate(274deg) brightness(93%) contrast(102%);}
+.tint-orange{filter:invert(34%) sepia(86%) saturate(2990%) hue-rotate(7deg) brightness(101%) contrast(105%);}
+.tint-green{filter:invert(37%) sepia(97%) saturate(563%) hue-rotate(88deg) brightness(95%) contrast(94%);}
+
+/* ========== 7) Find Lounges ========== */
+.lounge-filter .card-body{padding:14px;}
+.lounge-filter .form-control{height:36px;}
+.country-select{height:36px;}
+
+.lounge-card{border:1px solid var(--fda-border-10);border-radius:14px;overflow:hidden;}
+.lounge-card .card-body{padding:16px;}
+.lounge-media{position:relative;width:100%;height:180px;background:#f3f4f6;overflow:hidden;}
+.lounge-media img{width:100%;height:100%;object-fit:cover;display:block;}
+
+.premium-badge{
+  position:absolute;right:10px;top:10px;background:rgba(254,154,0,.9);border:none;border-radius:999px;
+  font-size:12px;padding:.2rem .6rem;
 }
 
-/* Keep brand-sub consistent in header */
-.navbar .brand-sub{
-  font-size:12px; letter-spacing:.12em; text-transform:uppercase;
-  color: var(--fda-text-muted);
+.chip{
+  border:1px solid var(--fda-border-10);background:#fff;color:var(--fda-text);
+  border-radius:999px;padding:.15rem .5rem;font-size:12px;display:inline-flex;align-items:center;gap:.35rem;
+}
+.chip i{font-size:12px;}
+.chip-more{background:#F3F4F6;border-color:#E5E7EB;}
+.tint-slate{filter:invert(41%) sepia(5%) saturate(420%) hue-rotate(197deg) brightness(93%) contrast(88%);}
+
+.occupancy{color:var(--fda-text);}
+.occupancy .occ-text{color:inherit!important;font-weight:600;}
+.occupancy.occ-low{color:#016630;}
+.occupancy.occ-mid{color:#894B00;}
+.occupancy.occ-high{color:#9F2D00;}
+.occupancy.occ-low .occ-icon{filter:invert(20%) sepia(98%) saturate(1011%) hue-rotate(118deg) brightness(44%) contrast(105%);}
+.occupancy.occ-mid .occ-icon{filter:invert(23%) sepia(35%) saturate(2657%) hue-rotate(12deg) brightness(92%) contrast(94%);}
+.occupancy.occ-high .occ-icon{filter:invert(19%) sepia(89%) saturate(2606%) hue-rotate(353deg) brightness(90%) contrast(111%);}
+
+/* ========== 8) Booking Modal ========== */
+.booking-modal-dialog{max-width:392px;}
+.booking-modal{background:#fff;border-radius:16px;box-shadow:var(--fda-shadow-1),var(--fda-shadow-2);}
+.booking-lounge-head{background:#FBFBFC;}
+.chip-soft{background:#F3F4F6;border:1px solid #E5E7EB;}
+.booking-back{color:var(--fda-primary);font-weight:600;}
+.booking-back:hover{text-decoration:underline;}
+.modal-footer{gap:12px;}
+.modal-footer .btn-fda{width:auto;max-width:none;}
+
+.premium-chip-modal{background:#FEF3C6;border:1px solid #FEE685;color:#973C00;border-radius:999px;padding:.18rem .6rem;font-size:12px;display:inline-block;}
+
+.flight-info{background:#EFF6FF;border:1px solid #BEDBFF;border-radius:12px;}
+.flight-found-sep{border:0;border-top:1px solid #BEDBFF;opacity:1;}
+
+.box-muted{background:rgba(236,236,240,.30);border:1px solid rgba(0,0,0,.10);}
+.legend-dot{width:14px;height:14px;border-radius:4px;display:inline-block;border:1px solid transparent;}
+.legend-dot.low{background:#DCFCE7;border-color:#B9F8CF;}
+.legend-dot.mid{background:#FFF5D6;border-color:#FEE685;}
+.legend-dot.high{background:#FFE1E1;border-color:#FFB3B3;}
+.legend-dot.full{background:#FECACA;border-color:#F87171;}
+.legend-dot.unavail{background:#E5E7EB;border-color:#D1D5DB;}
+
+.slot-card{background:#EFF6FF;border:1px solid #BEDBFF;border-radius:12px;}
+.slot-occ-pill{
+  display:inline-flex;align-items:center;justify-content:center;padding:.2rem .6rem;border-radius:999px;
+  font-weight:600;font-size:12px;background:#DCFCE7;border:1px solid #BEDBFF;color:#193CB8;
 }
 
+.method-card{border:1px solid var(--fda-border-10);border-radius:12px;}
+.price-chip{
+  display:inline-flex;align-items:center;justify-content:center;padding:.15rem .55rem;border-radius:999px;
+  font-weight:600;font-size:12px;background:#F3F4F6;border:1px solid #E5E7EB;color:var(--fda-text);
+}
 
+.summary-card{background:rgba(236,236,240,.80);border:1px solid rgba(0,0,0,.10);border-radius:12px;}
+.input-icon-left .input-group-text{background:#fff;border-right:0;color:#717182;}
+.input-icon-left .form-control{border-left:0;}
+
+.secure-flag{color:#16A34A;font-weight:600;font-size:12px;display:flex;align-items:center;gap:6px;}
+
+.sum-panel{background:#EEF4FF;border:1px solid #BEDBFF;padding:14px;}
+.sum-header{color:#121826;padding:4px 0 10px;font-size:14px;}
+.sum-header i{color:#121826;}
+.sum-sep{border:0;border-top:1px solid #BEDBFF;opacity:1;margin:10px 0 12px;}
+.sum-amount{font-weight:700;font-size:22px;}
+.sum-kv{display:flex;gap:10px;}
+.icon-circle{width:28px;height:28px;border-radius:50%;background:#E6EDFF;display:flex;align-items:center;justify-content:center;}
+.sum-k{color:#6B7280;font-size:12px;}
+.sum-v{font-weight:600;}
+.sum-sub{color:#2563EB;font-size:11px;}
+.sum-blue{color:#2563EB;}
+#sum2-title{color:#2563EB;} /* fixed selector */
+
+.pay-card{background:#fff;border:1px solid #E5E7EB;padding:14px;}
+.pay-title{font-weight:400;margin-bottom:8px;display:flex;align-items:center;font-size:13px;}
+.pay-input{height:40px;background:#F8FAFC;}
+
+.secure-note{
+  background:#ECFFD6;border:1px solid #B9F8CF;color:#016630;
+  padding:10px 12px;border-radius:10px;font-weight:600;display:flex;align-items:center;font-size:12px;margin-bottom:12px;
+}
+
+/* Stage 2 big CTA (per UI spec) */
+.btn-pay{
+  background:#155DFC!important;color:#fff!important;border:none;height:44px;font-weight:700;font-size:12px;border-radius:10px;
+}
+.btn-pay i{color:inherit;}
+.btn-pay:disabled{opacity:.6;cursor:not-allowed;}
+.tos{font-size:10px;line-height:1.3;}
+
+/* ========== 9) Content Utilities ========== */
+.welcome-title{font-weight:700;font-size:30px;}
+.welcome-sub{color:var(--fda-text-muted);font-size:13px;}
+.demo-note{color:#90A1B9;font-size:9.84px;}
+.text-muted-2{color:var(--fda-text-muted);}
+.why-title{color:#314158;font-weight:600;font-size:13px;}
+.why-list{max-width:520px;}
+.why-item{font-size:11px;color:#717182;}
+.bullet{width:.55rem;height:.55rem;border-radius:50%;display:inline-block;margin-right:.5rem;transform:translateY(1px);}
+.bullet-blue{background:#2B7FFF;}
+.bullet-green{background:#00C950;}
+.bullet-purple{background:#AD46FF;}

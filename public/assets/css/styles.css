@@ -545,3 +545,63 @@ h5{font-weight:500;font-size:18px;}
 }
 
 .membership-modal-dialog{ max-width:392px; }
+
+/* ===== Tabs (keep 4 in one row) ===== */
+.profile-tab-rail{ width:620px; max-width:100%; }
+.auth-tabs.tabs-4{ display:grid; grid-template-columns:repeat(4,1fr); column-gap:6px; height:100%; margin:0; }
+@media (max-width:576px){
+  .profile-tab-rail{ width:100%; }
+  .auth-tabs.tabs-4{ grid-template-columns:repeat(2,1fr); }
+}
+
+/* ===== Profile polish ===== */
+.avatar-lg-soft{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:64px; height:64px; border-radius:50%;
+  background:#E7F8EC; color:var(--fda-primary); font-weight:700; font-size:14px;
+}
+.profile-input:disabled{
+  background:#F3F4F6!important; border:1px solid var(--fda-border-10)!important;
+  color:#9CA3AF!important; border-radius:8px; opacity:1;
+}
+.profile-edit-btn{ height:32px; padding:0 12px; font-weight:700; font-size:12px; }
+.profile-card-body{ padding:18px; }
+
+/* ===== Security tab ===== */
+.security-card{ border-radius:16px; }
+.security-card .card-body{ padding:22px; }
+.sec-label{ font-weight:700; margin-bottom:6px; color:var(--fda-text); }
+.sec-input{
+  height:44px!important; background:#ECEFF4; border:1px solid var(--fda-border-10);
+  border-radius:10px; font-size:14px; padding-right:40px;
+}
+.security-card .toggle-pass{
+  right:10px; top:50%; transform:translateY(-50%); width:28px; height:28px;
+}
+.sec-submit{ height:36px; border-radius:10px; font-weight:700; font-size:12px; padding:0 14px; }
+
+/* ===== Notifications list spacing (thin separators) ===== */
+.notify-card .card-body{ padding:20px; }
+.notify-list .list-group-item{ padding:16px 0; border-color:#ECEFF4; }
+
+/* ==== Switches (Notifications) – black when ON ==== */
+.form-switch .form-check-input:checked{
+  background-color:#000;
+  border-color:#000;
+}
+.form-check-input:focus{
+  box-shadow:none;
+  border-color:#000;
+}
+/* optional: slightly larger switch to match mock */
+.notify-list .form-check-input{ width:2.6em; height:1.3em; }
+
+/* ===== Preferences ===== */
+.pref-card .card-body{ padding:20px; }
+.pref-select{
+  height:44px; background:#ECEFF4; border:1px solid var(--fda-border-10); border-radius:10px;
+}
+.pref-save-btn{ height:36px; font-weight:700; font-size:12px; padding:0 14px; }
+.pref-danger-note{ border-color:#ECEFF4!important; }
+.pref-danger-btn{ height:40px; font-weight:700; }
+

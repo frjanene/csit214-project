@@ -51,7 +51,7 @@
       <!-- Right side: membership badge + avatar -->
       <div class="d-flex align-items-center gap-3">
         <span class="member-badge">BASIC Member</span>
-        <span class="avatar-initials">JS</span>
+        <a href="<?= base_href('profile') ?>" class="avatar-initials text-decoration-none">JS</a>
       </div>
     </div>
   </div>

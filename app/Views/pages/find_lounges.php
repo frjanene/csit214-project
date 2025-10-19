@@ -16,6 +16,8 @@ $country   = $filters['country'] ?? '';
 $amenSel   = $filters['amen'] ?? [];
 ?>
 
+<?php $current = $current ?? ($current_plan ?? null); ?>
+
 <!-- Find Lounges -->
 <div class="container py-4">
 
@@ -156,17 +158,19 @@ $amenSel   = $filters['amen'] ?? [];
 
                 <!-- Booking later -->
                 <a href="#"
-                   class="btn btn-fda btn-fda-primary btn-fda-fit"
-                   style="height:32px; padding:0 14px;"
-                   data-bs-toggle="modal"
-                   data-bs-target="#bookingModal"
-                   data-lounge-occ="<?= $used ?>/<?= $cap ?>"
-                   data-lounge-title="<?= htmlspecialchars($L['name']) ?>"
-                   data-lounge-airport="<?= htmlspecialchars($L['airport_name']) ?> (<?= htmlspecialchars($L['iata']) ?>)<?= $L['terminal'] ? ' – '.htmlspecialchars($L['terminal']) : '' ?>"
-                   data-lounge-city="<?= htmlspecialchars(($L['city'] ?? '').($L['country'] ? ', '.$L['country'] : '')) ?>"
-                   data-lounge-hours="<?= htmlspecialchars(substr($L['open_time'],0,5) . ' – ' . substr($L['close_time'],0,5)) ?>"
-                   data-lounge-price="<?= htmlspecialchars($L['price_usd']) ?>"
-                   data-lounge-img="<?= htmlspecialchars($L['image_url'] ?: 'assets/img/lounge-placeholder.jpg') ?>">
+                  class="btn btn-fda btn-fda-primary btn-fda-fit"
+                  style="height:32px; padding:0 14px;"
+                  data-bs-toggle="modal"
+                  data-bs-target="#bookingModal"
+                  data-lounge-id="<?= (int)$L['id'] ?>"
+                  data-lounge-premium="<?= (int)$L['is_premium'] ?>"
+                  data-lounge-occ="<?= $used ?>/<?= $cap ?>"
+                  data-lounge-title="<?= htmlspecialchars($L['name']) ?>"
+                  data-lounge-airport="<?= htmlspecialchars($L['airport_name']) ?> (<?= htmlspecialchars($L['iata']) ?>)<?= $L['terminal'] ? ' – '.htmlspecialchars($L['terminal']) : '' ?>"
+                  data-lounge-city="<?= htmlspecialchars(($L['city'] ?? '').($L['country'] ? ', '.$L['country'] : '')) ?>"
+                  data-lounge-hours="<?= htmlspecialchars(substr($L['open_time'],0,5) . ' – ' . substr($L['close_time'],0,5)) ?>"
+                  data-lounge-price="<?= htmlspecialchars($L['price_usd']) ?>"
+                  data-lounge-img="<?= htmlspecialchars($L['image_url'] ?: 'assets/img/lounge-placeholder.jpg') ?>">
                   Book Now
                 </a>
               </div>

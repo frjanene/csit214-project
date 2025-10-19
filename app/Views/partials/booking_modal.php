@@ -1,4 +1,45 @@
-<div class="modal fade" id="bookingModal" tabindex="-1" aria-hidden="true">
+<?php
+// Ensure we can compute a plan even if the parent view didn't pass $current/$current_plan.
+require_once __DIR__ . '/../../Models/Booking.php';
+require_once __DIR__ . '/../../Controllers/BaseController.php'; // for is_logged_in()/current_user() if defined
+
+// Prefer a plan provided by the parent view; else compute from logged-in user; else fallback to basic.
+$__plan =
+  $current
+  ?? ($current_plan ?? null)
+  ?? (function () {
+        if (function_exists('is_logged_in') && is_logged_in() && function_exists('current_user')) {
+          $u = current_user();
+          if (!empty($u['id'])) {
+            try { return Booking::userPlan((int)$u['id']); } catch (\Throwable $e) { /* noop */ }
+          }
+        }
+        return [
+          'slug'            => 'basic',
+          'name'            => 'Basic',
+          'normal_access'   => 'pay_per_use',
+          'premium_access'  => 'pay_per_use',
+          'guest_allowance' => 0,
+        ];
+     })();
+?>
+
+
+<div
+  class="modal fade"
+  id="bookingModal"
+  tabindex="-1"
+  aria-hidden="true"
+  data-logged-in="<?= is_logged_in() ? '1' : '0' ?>"
+  data-user-name="<?php if(is_logged_in()){ $u=current_user(); echo htmlspecialchars(trim(($u['first_name']??'').' '.($u['last_name']??''))); } ?>"
+  data-user-email="<?php if(is_logged_in()){ $u=current_user(); echo htmlspecialchars($u['email']??''); } ?>"
+  data-plan-slug="<?= htmlspecialchars(strtolower($__plan['slug'])) ?>"
+  data-plan-name="<?= htmlspecialchars($__plan['name']) ?>"
+  data-plan-normal="<?= htmlspecialchars($__plan['normal_access']) ?>"
+  data-plan-premium="<?= htmlspecialchars($__plan['premium_access']) ?>"
+  data-plan-guests="<?= (int)$__plan['guest_allowance'] ?>"
+>
+
   <div class="modal-dialog booking-modal-dialog auth-modal-dialog modal-dialog-centered">
     <div class="modal-content booking-modal auth-modal">
 
@@ -43,7 +84,7 @@
               </div>
 
               <span class="premium-chip-modal mt-2">⭐ Premium Lounge</span>
-              <div class="text-muted small mt-2">Basic member · pay-per-use for all lounges</div>
+              <div class="text-muted small mt-2" id="bk-plan-note">Basic member · pay-per-use for all lounges</div>
             </div>
           </div>
 

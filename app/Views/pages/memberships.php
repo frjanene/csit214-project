@@ -1,7 +1,29 @@
-<!-- Membership Management -->
-<div class="container py-4">
+<?php
+/** app/Views/pages/memberships.php */
 
-  <!-- Page title -->
+$plans    = $plans    ?? [];
+$current  = $current  ?? null;
+$user     = $user     ?? null;
+$isGuest  = !$user;
+
+/**
+ * Decide which slug is "current" for pill highlighting.
+ * Prefer the controller-provided $currSlug (already normalized),
+ * else fall back to the current plan's slug, else "basic".
+ */
+$currSlug = isset($currSlug)
+  ? strtolower($currSlug)
+  : strtolower($current['slug'] ?? 'basic');
+
+// If controller didn’t resolve a $current plan (edge case), default to basic
+if (!$current && isset($plans['basic'])) {
+  $current = $plans['basic'];
+}
+
+// Small helper for price formatting
+$fmtPrice = fn($p) => (float)$p > 0 ? ('$' . number_format((float)$p, 0)) : 'Free';
+?>
+<div class="container py-4">
   <div class="mb-3">
     <h2 class="fw-bold mb-1">Membership Management</h2>
     <div class="text-muted">Choose the perfect membership tier for your travel needs</div>
@@ -10,57 +32,50 @@
   <!-- Current membership summary -->
   <div class="card member-current mb-4">
     <div class="card-body">
-
-      <!-- Row 1: label + Active on far ends -->
       <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-1">
         <div class="label-small">Your Current Membership</div>
         <span class="badge badge-active">Active</span>
       </div>
-
-      <!-- Row 2: plan + Free on same line -->
       <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <div class="fw-semibold">Basic (Free) Member</div>
-        <div class="fw-semibold">Free</div>
+        <div class="fw-semibold"><?= htmlspecialchars($current['name'] ?? 'Basic (Free)') ?> Member</div>
+        <div class="fw-semibold"><?= $fmtPrice($current['monthly_fee_usd'] ?? 0) ?></div>
       </div>
-
-      <!-- Row 3: member id + renewal note aligned ends -->
       <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 text-muted small">
-        <div>Member ID: <span class="text-muted">BS123456</span></div>
-        <div>No renewal required</div>
+        <div>Member ID: <span class="text-muted"><?= $user ? ('U' . $user['id']) : '—' ?></span></div>
+        <div><?= ($current['slug'] ?? 'basic') === 'basic' ? 'No renewal required' : 'Renews monthly' ?></div>
       </div>
 
-      <!-- three white tiles -->
       <div class="row g-3 mt-3">
         <div class="col-12 col-md-4">
           <div class="member-tile vcenter">
-            <div class="tile-ico">
-              <img src="assets/img/lounge-icon.svg" class="inline-icon tint-blue" alt="">
-            </div>
+            <div class="tile-ico"><img src="assets/img/lounge-icon.svg" class="inline-icon tint-blue" alt=""></div>
             <div class="tile-lines">
               <div class="small text-muted">Lounge Access</div>
-              <div class="fw-semibold">Premium locations</div>
+              <div class="fw-semibold">
+                <?= ($current['premium_access'] ?? 'pay_per_use') === 'free'
+                      ? 'All incl. Premium'
+                      : (($current['normal_access'] ?? 'pay_per_use') === 'free'
+                          ? 'Normal lounges free'
+                          : 'Pay-per-use') ?>
+              </div>
             </div>
           </div>
         </div>
         <div class="col-12 col-md-4">
           <div class="member-tile vcenter">
-            <div class="tile-ico">
-              <img src="assets/img/guest-icon.svg" class="inline-icon tint-green" alt="">
-            </div>
+            <div class="tile-ico"><img src="assets/img/guest-icon.svg" class="inline-icon tint-green" alt=""></div>
             <div class="tile-lines">
               <div class="small text-muted">Guest Allowance</div>
-              <div class="fw-semibold">0 per visit</div>
+              <div class="fw-semibold"><?= (int)($current['guest_allowance'] ?? 0) ?> per visit</div>
             </div>
           </div>
         </div>
         <div class="col-12 col-md-4">
           <div class="member-tile vcenter">
-            <div class="tile-ico">
-              <img src="assets/img/star.svg" class="inline-icon tint-purple" alt="">
-            </div>
+            <div class="tile-ico"><img src="assets/img/star.svg" class="inline-icon tint-purple" alt=""></div>
             <div class="tile-lines">
               <div class="small text-muted">Benefits</div>
-              <div class="fw-semibold">3 included</div>
+              <div class="fw-semibold"><?= isset($current['benefits']) ? count($current['benefits']) : 0 ?> included</div>
             </div>
           </div>
         </div>
@@ -71,178 +86,72 @@
   <!-- Tiers -->
   <div class="mb-2 fw-semibold">Available Membership Tiers</div>
   <div class="row g-3 mb-4">
-    <!-- Basic (current) -->
-    <div class="col-12 col-md-6 col-xl-3">
-      <div class="card tier-card current h-100 position-relative">
-        <span class="pill-current pill-centered">Current Plan</span>
-        <div class="card-body d-flex flex-column align-items-stretch">
+    <?php foreach ($plans as $slug => $p): ?>
+      <?php
+        $slugLower = strtolower($slug);
+        $isCurrent = ($slugLower === $currSlug);
+        $price     = $fmtPrice($p['monthly_fee_usd']);
+      ?>
+      <div class="col-12 col-md-6 col-xl-3">
+        <div class="card tier-card h-100 position-relative <?= $isCurrent ? 'current' : '' ?>">
+          <?php if ($isCurrent): ?>
+            <span class="pill-current pill-centered">Current Plan</span>
+          <?php endif; ?>
+          <div class="card-body d-flex flex-column align-items-stretch">
+            <div class="tier-top text-center">
+              <span class="ico-circle mb-2">
+                <?php if ($slugLower==='silver'): ?><i class="fa-solid fa-bolt"></i>
+                <?php elseif ($slugLower==='gold'): ?><i class="fa-regular fa-star"></i>
+                <?php elseif ($slugLower==='platinum'): ?><i class="fa-solid fa-crown"></i>
+                <?php else: ?><i class="fa-regular fa-id-badge"></i><?php endif; ?>
+              </span>
+              <div class="fw-semibold"><?= htmlspecialchars($p['name']) ?></div>
+              <div class="h3 fw-bold my-1"><?= $price ?></div>
+              <div class="text-muted small mb-3"><?= (float)$p['monthly_fee_usd'] > 0 ? 'per month' : '&nbsp;' ?></div>
+            </div>
 
-          <!-- icon, title, price, per month — stacked & centered -->
-          <div class="tier-top text-center">
-            <span class="ico-circle mb-2"><i class="fa-regular fa-id-badge"></i></span>
-            <div class="fw-semibold">Basic (Free)</div>
-            <div class="h3 fw-bold my-1">Free</div>
-            <div class="text-muted small mb-3">&nbsp;</div>
-          </div>
+            <ul class="member-list small">
+              <?php foreach (array_slice($p['benefits'] ?? [], 0, 6) as $b): ?>
+                <li><?= htmlspecialchars($b) ?></li>
+              <?php endforeach; ?>
+            </ul>
 
-          <ul class="member-list small">
-            <li>Free membership signup</li>
-            <li>Buy single-visit pass for all lounges, including premium lounges</li>
-            <li>Wi-Fi access</li>
-          </ul>
+            <hr class="tier-sep">
+            <div class="small">
+              <div class="d-flex justify-content-between">
+                <span class="text-muted">Guest Allowance:</span>
+                <span class="fw-semibold"><?= (int)$p['guest_allowance'] ?> per visit</span>
+              </div>
+              <div class="d-flex justify-content-between">
+                <span class="text-muted">Lounge Access:</span>
+                <span class="fw-semibold">Global</span>
+              </div>
+            </div>
 
-          <!-- line before guest allowance -->
-          <hr class="tier-sep">
-
-          <div class="small">
-            <div class="d-flex justify-content-between"><span class="text-muted">Guest Allowance:</span><span class="fw-semibold">0 per visit</span></div>
-            <div class="d-flex justify-content-between"><span class="text-muted">Lounge Access:</span><span class="fw-semibold">Global</span></div>
-          </div>
-
-          <div class="mt-auto pt-3">
-            <button class="btn btn-disabled w-100" disabled>Current Plan</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Silver -->
-    <div class="col-12 col-md-6 col-xl-3">
-      <div class="card tier-card h-100">
-        <div class="card-body d-flex flex-column align-items-stretch">
-          <div class="tier-top text-center">
-            <span class="ico-circle mb-2"><i class="fa-solid fa-bolt"></i></span>
-            <div class="fw-semibold">Silver</div>
-            <div class="h3 fw-bold my-1">$299</div>
-            <div class="text-muted small mb-3">per month</div>
-          </div>
-
-          <ul class="member-list small">
-            <li>Free access to normal lounges</li>
-            <li>Pay-per-use for premium lounges</li>
-            <li>Wi-Fi &amp; printing</li>
-            <li>Light refreshments</li>
-          </ul>
-
-          <hr class="tier-sep">
-
-          <div class="small">
-            <div class="d-flex justify-content-between"><span class="text-muted">Guest Allowance:</span><span class="fw-semibold">1 per visit</span></div>
-            <div class="d-flex justify-content-between"><span class="text-muted">Lounge Access:</span><span class="fw-semibold">Global</span></div>
-          </div>
-
-          <div class="mt-auto pt-3">
-            <button class="btn btn-fda btn-fda-primary w-100 btn-upgrade-tier"
-                    data-plan="Silver" data-price="299"
-                    data-benefits='["Free access to normal lounges","Pay-per-use for premium lounges","Wi-Fi & printing","Light refreshments"]'>
-              Upgrade to Silver
-            </button>
+            <div class="mt-auto pt-3">
+              <?php if ($isCurrent): ?>
+                <button class="btn btn-disabled w-100" disabled>Current Plan</button>
+              <?php else: ?>
+                <?php if ($isGuest): ?>
+                  <a class="btn btn-fda btn-fda-primary w-100" href="<?= base_href('welcome') ?>">Sign up to Upgrade</a>
+                <?php else: ?>
+                  <button
+                    class="btn btn-fda btn-fda-primary w-100 btn-upgrade-tier"
+                    data-plan="<?= htmlspecialchars($slugLower) ?>"
+                    data-price="<?= htmlspecialchars((string)$p['monthly_fee_usd']) ?>"
+                    data-benefits='<?= json_encode($p["benefits"] ?? []) ?>'>
+                    Upgrade to <?= htmlspecialchars($p['name']) ?>
+                  </button>
+                <?php endif; ?>
+              <?php endif; ?>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- Gold -->
-    <div class="col-12 col-md-6 col-xl-3">
-      <div class="card tier-card h-100">
-        <div class="card-body d-flex flex-column align-items-stretch">
-          <div class="tier-top text-center">
-            <span class="ico-circle halo-gold mb-2"><i class="fa-regular fa-star"></i></span>
-            <div class="fw-semibold">Gold</div>
-            <div class="h3 fw-bold my-1">$499</div>
-            <div class="text-muted small mb-3">per month</div>
-          </div>
-
-          <ul class="member-list small">
-            <li>Free access to all lounges, including premium lounges</li>
-            <li>Unlimited time</li>
-            <li>Premium amenities</li>
-            <li>Full dining</li>
-          </ul>
-
-          <hr class="tier-sep">
-
-          <div class="small">
-            <div class="d-flex justify-content-between"><span class="text-muted">Guest Allowance:</span><span class="fw-semibold">2 per visit</span></div>
-            <div class="d-flex justify-content-between"><span class="text-muted">Lounge Access:</span><span class="fw-semibold">Global</span></div>
-          </div>
-
-          <div class="mt-auto pt-3">
-            <button class="btn btn-fda btn-fda-primary w-100 btn-upgrade-tier"
-                    data-plan="Gold" data-price="499"
-                    data-benefits='["Free access to all lounges, including premium lounges","Unlimited time","Premium amenities","Full dining"]'>
-              Upgrade to Gold
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Platinum -->
-    <div class="col-12 col-md-6 col-xl-3">
-      <div class="card tier-card h-100">
-        <div class="card-body d-flex flex-column align-items-stretch">
-          <div class="tier-top text-center">
-            <span class="ico-circle mb-2"><i class="fa-solid fa-crown"></i></span>
-            <div class="fw-semibold">Platinum</div>
-            <div class="h3 fw-bold my-1">$699</div>
-            <div class="text-muted small mb-3">per month</div>
-          </div>
-
-          <ul class="member-list small">
-            <li>Free access to all lounges, including premium lounges</li>
-            <li>Unlimited time</li>
-            <li>Concierge service</li>
-            <li>Private meeting rooms</li>
-          </ul>
-
-          <hr class="tier-sep">
-
-          <div class="small">
-            <div class="d-flex justify-content-between"><span class="text-muted">Guest Allowance:</span><span class="fw-semibold">3 per visit</span></div>
-            <div class="d-flex justify-content-between"><span class="text-muted">Lounge Access:</span><span class="fw-semibold">Global</span></div>
-          </div>
-
-          <div class="mt-auto pt-3">
-            <button class="btn btn-fda btn-fda-primary w-100 btn-upgrade-tier"
-                  data-plan="Platinum" data-price="699"
-                  data-benefits='["Free access to all lounges, including premium lounges","Unlimited time","Concierge service","Private meeting rooms"]'>
-            Upgrade to Platinum
-          </button
-          </div>
-        </div>
-      </div>
-    </div>
+    <?php endforeach; ?>
   </div>
 
-  <!-- Feature comparison (unchanged) -->
-  <div class="card panel-card">
-    <div class="card-body">
-      <div class="fw-semibold mb-3">Feature Comparison</div>
-      <div class="table-responsive">
-        <table class="table table-borderless align-middle member-table">
-          <thead>
-            <tr class="text-muted">
-              <th style="width:24%">Feature</th>
-              <th>Basic (Free)</th>
-              <th>Silver</th>
-              <th>Gold</th>
-              <th>Platinum</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td class="text-muted">Monthly Fee</td><td>Free</td><td>$299</td><td>$499</td><td>$699</td></tr>
-            <tr><td class="text-muted">Guest Allowance</td><td>0</td><td>1</td><td>2</td><td>3</td></tr>
-            <tr><td class="text-muted">Normal Lounges</td><td><a href="#" class="link-blue">Pay-per-use</a></td><td>Free</td><td>Free</td><td>Free</td></tr>
-            <tr><td class="text-muted">Premium Lounges</td><td><a href="#" class="link-blue">Pay-per-use</a></td><td><a href="#" class="link-blue">Pay-per-use</a></td><td>Free</td><td>Free</td></tr>
-            <tr><td class="text-muted">Concierge Service</td><td>—</td><td>—</td><td>—</td><td>Included</td></tr>
-            <tr><td class="text-muted">Private Meeting Rooms</td><td>—</td><td>—</td><td>—</td><td>Included</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
+  <!-- (Optional) Feature comparison table can remain below if you have it in a separate partial -->
 </div>
 
 <?php require __DIR__ . '/../partials/membership_upgrade_modal.php'; ?>

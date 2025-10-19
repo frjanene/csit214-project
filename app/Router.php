@@ -17,6 +17,7 @@ $routes = [
   'find'        => 'LoungeController@index',
   'bookings'    => 'BookingController@index',
   'memberships' => 'MembershipController@index',
+  'membership_upgrade' => 'MembershipController@upgrade',
   'profile'     => 'ProfileController@index',
   'forgot'      => 'PasswordController@request',
   'forgot_done' => 'PasswordController@sent',

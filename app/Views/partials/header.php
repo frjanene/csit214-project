@@ -1,14 +1,34 @@
 <?php
-  $current = $_GET['r'] ?? 'dashboard';
-  $is = fn($route) => $current === $route ? 'active' : '';
+  // Use a unique variable name for the active route to avoid conflicts
+  $activeRoute = $_GET['r'] ?? 'dashboard';
+  $is = fn($route) => $activeRoute === $route ? 'active' : '';
+
   $user = current_user();
   $isGuest = !$user;
-  $badgeText = $isGuest ? 'GUEST' : 'BASIC Member'; // can be made dynamic later
+
+  // Determine current membership plan for signed-in users
+  $planSlug = 'basic';
+  if ($user) {
+    require_once __DIR__ . '/../../Models/Membership.php';
+    try {
+      $p = Membership::userCurrent((int)$user['id']);
+      if ($p && !empty($p['slug'])) {
+        $planSlug = strtolower($p['slug']);
+      }
+    } catch (Throwable $e) {
+      // Avoid breaking header on DB errors
+      $planSlug = 'basic';
+    }
+  }
+
+  // Display badge text based on plan
+  $badgeText = $isGuest ? 'GUEST' : (strtoupper($planSlug) . ' Member');
+
+  // Avatar initials
   $initials = $isGuest ? 'GU' : initials_from($user['first_name'], $user['last_name']);
 ?>
 <nav class="navbar navbar-expand-lg header-bar bg-white">
   <div class="container align-items-center">
-
     <a class="navbar-brand d-flex align-items-center gap-2" href="<?= base_href('dashboard') ?>">
       <img src="assets/img/logo.svg" alt="FlyDreamAir" class="brand-logo" width="40" height="40">
       <div class="d-flex flex-column brand-stack">
@@ -56,7 +76,9 @@
         <?php if ($isGuest): ?>
           <a href="<?= base_href('welcome') ?>" class="btn btn-sm btn-outline-dark">Sign in</a>
         <?php else: ?>
-          <a href="<?= base_href('profile') ?>" class="avatar-initials text-decoration-none"><?= htmlspecialchars($initials) ?></a>
+          <a href="<?= base_href('profile') ?>" class="avatar-initials text-decoration-none">
+            <?= htmlspecialchars($initials) ?>
+          </a>
           <a href="<?= base_href('signout') ?>" class="btn btn-sm btn-outline-dark">Sign out</a>
         <?php endif; ?>
       </div>

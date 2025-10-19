@@ -6,6 +6,14 @@ $occClass = function(int $used, int $cap): string {
   if ($pct <= 80) return 'occ-mid';
   return 'occ-high';
 };
+
+$lounges   = $lounges   ?? [];
+$amenities = $amenities ?? [];
+$countries = $countries ?? [];
+$filters   = $filters   ?? ['q'=>'','country'=>'','amen'=>[]];
+$q         = $filters['q'] ?? '';
+$country   = $filters['country'] ?? '';
+$amenSel   = $filters['amen'] ?? [];
 ?>
 
 <!-- Find Lounges -->
@@ -20,223 +28,153 @@ $occClass = function(int $used, int $cap): string {
   <!-- Search & filters bar -->
   <div class="card mb-3 lounge-filter">
     <div class="card-body">
-      <div class="d-flex align-items-center gap-3 flex-wrap">
-        <div class="flex-grow-1 position-relative">
-          <i class="fa-solid fa-magnifying-glass text-muted position-absolute" style="left:12px; top:10px;"></i>
-          <input type="text" class="form-control ps-5" placeholder="Search by airport, city, or lounge name…">
+      <!-- NOTE: action to root + hidden r=find to satisfy Router -->
+      <form id="loungeFilter" method="get" action="<?= base_href() ?>">
+        <input type="hidden" name="r" value="find">
+
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+          <div class="flex-grow-1 position-relative">
+            <i class="fa-solid fa-magnifying-glass text-muted position-absolute" style="left:12px; top:10px;"></i>
+            <input
+              type="text"
+              name="q"
+              class="form-control ps-5"
+              placeholder="Search by airport, city, or lounge name…"
+              value="<?= htmlspecialchars($q) ?>"
+              data-autosubmit="debounce"
+            >
+          </div>
+
+          <!-- Countries dropdown -->
+          <div style="min-width: 220px;">
+            <select class="form-select form-select-sm country-select" name="country" data-autosubmit="instant">
+              <option <?= $country==='' || $country==='All Countries' ? 'selected' : '' ?>>All Countries</option>
+              <?php foreach ($countries as $c): ?>
+                <option value="<?= htmlspecialchars($c) ?>" <?= $country===$c ? 'selected' : '' ?>>
+                  <?= htmlspecialchars($c) ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </div>
         </div>
 
-        <!-- (1) Countries dropdown -->
-        <div style="min-width: 220px;">
-          <select class="form-select form-select-sm country-select">
-            <option selected>All Countries</option>
-            <option>Australia</option>
-            <option>Canada</option>
-            <option>France</option>
-            <option>Germany</option>
-            <option>Japan</option>
-            <option>Singapore</option>
-            <option>United Arab Emirates</option>
-            <option>United Kingdom</option>
-            <option>United States</option>
-          </select>
+        <!-- Amenities checklist (icons removed) -->
+        <div class="row g-3 mt-3">
+          <div class="col-12 small text-muted">Amenities</div>
+          <div class="col-12 d-flex flex-wrap gap-4 small">
+            <?php foreach ($amenities as $a): ?>
+              <?php $checked = in_array($a['code'], $amenSel, true) ? 'checked' : ''; ?>
+              <label class="form-check d-flex align-items-center gap-2 mb-0">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  name="amen[]"
+                  value="<?= htmlspecialchars($a['code']) ?>"
+                  <?= $checked ?>
+                  data-autosubmit="instant"
+                >
+                <span><?= htmlspecialchars($a['label']) ?></span>
+              </label>
+            <?php endforeach; ?>
+          </div>
         </div>
-      </div>
-
-      <!-- Amenities quick toggles -->
-      <div class="row g-3 mt-3">
-        <div class="col-12 small text-muted">Amenities</div>
-        <div class="col-12 d-flex flex-wrap gap-4 small">
-          <label class="form-check d-flex align-items-center gap-2">
-            <input class="form-check-input" type="checkbox"><i class="fa-solid fa-wifi"></i> Wi-Fi
-          </label>
-          <label class="form-check d-flex align-items-center gap-2">
-            <input class="form-check-input" type="checkbox"><i class="fa-solid fa-shower"></i> Showers
-          </label>
-          <label class="form-check d-flex align-items-center gap-2">
-            <input class="form-check-input" type="checkbox"><i class="fa-solid fa-briefcase"></i> Business Center
-          </label>
-          <label class="form-check d-flex align-items-center gap-2">
-            <input class="form-check-input" type="checkbox"><i class="fa-solid fa-utensils"></i> Premium Dining
-          </label>
-          <label class="form-check d-flex align-items-center gap-2">
-            <input class="form-check-input" type="checkbox"><i class="fa-solid fa-bed"></i> Sleep Pods
-          </label>
-          <label class="form-check d-flex align-items-center gap-2">
-            <input class="form-check-input" type="checkbox"><i class="fa-solid fa-champagne-glasses"></i> Champagne Bar
-          </label>
-        </div>
-      </div>
+      </form>
     </div>
   </div>
 
   <!-- Results grid -->
   <div class="row g-3">
-
-    <!-- Lounge card -->
-    <div class="col-lg-6">
-      <div class="card lounge-card h-100">
-        <div class="lounge-media">
-          <img src="assets/img/lounge-1.jpg" class="img-fluid" alt="">
-          <!-- (3) Premium badge: star + 90% #FE9A00, no border -->
-          <span class="badge premium-badge">⭐ Premium</span>
-        </div>
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-start">
-            <div>
-              <div class="fw-semibold">FlyDreamAir Premium Lounge</div>
-
-              <!-- (2) Location icon tinted to #717182 -->
-              <div class="text-muted small d-flex align-items-center gap-2 mt-1">
-                <img src="assets/img/location-secondary.svg" class="inline-icon tint-slate" alt="">
-                <span>Singapore Changi Airport (SIN) – Terminal 1</span>
-              </div>
-
-              <div class="text-muted small mt-1 d-flex align-items-center gap-2">
-                <img src="assets/img/time-icon.svg" class="inline-icon tint-muted" alt="">
-                <span>05:00 – 23:00</span>
-              </div>
-            </div>
-
-            <!-- (5) Occupancy color logic -->
-            <?php $used=89; $cap=120; $cls=$occClass($used,$cap); ?>
-            <div class="small d-flex align-items-center gap-1 occupancy <?= $cls ?>">
-              <img src="assets/img/guest-icon.svg" class="inline-icon occ-icon" alt="">
-              <span class="occ-text"><?= $used ?>/<?= $cap ?></span>
-            </div>
-          </div>
-
-          <!-- Feature chips -->
-          <div class="d-flex flex-wrap gap-2 mt-3">
-            <span class="chip"><i class="fa-solid fa-wifi"></i> Wi-Fi</span>
-            <span class="chip"><i class="fa-solid fa-shower"></i> Showers</span>
-            <span class="chip"><i class="fa-solid fa-utensils"></i> Premium Dining</span>
-            <span class="chip"><i class="fa-solid fa-champagne-glasses"></i> Champagne Bar</span>
-            <span class="chip chip-more">+3 more</span>
-          </div>
-
-          <!-- (4) Divider before price section -->
-          <hr class="glass-hr my-3">
-
-          <div class="d-flex justify-content-between align-items-center">
-            <div class="small">
-              <div class="fw-semibold">$55 per person</div>
-              <div class="text-muted">Basic member · pay-per-use for all lounges</div>
-            </div>
-            <!-- <a href="#" class="btn btn-fda btn-fda-primary btn-fda-fit" style="height:32px; padding:0 14px;">Book Now</a> -->
-             <a href="#"
-                class="btn btn-fda btn-fda-primary btn-fda-fit"
-                style="height:32px; padding:0 14px;"
-                data-bs-toggle="modal"
-                data-bs-target="#bookingModal"
-                data-lounge-occ="110/120"
-                data-lounge-title="FlyDreamAir Premium Lounge"
-                data-lounge-airport="Singapore Changi Airport (SIN) – Terminal 1"
-                data-lounge-city="Singapore, Singapore"
-                data-lounge-hours="05:00 – 23:00"
-                data-lounge-price="55"
-                data-lounge-img="assets/img/lounge-1.jpg">
-                Book Now
-              </a>
-          </div>
-        </div>
+    <?php if (empty($lounges)): ?>
+      <div class="col-12">
+        <div class="alert alert-light border">No lounges match your filters.</div>
       </div>
-    </div>
+    <?php else: ?>
+      <?php foreach ($lounges as $L): ?>
+        <div class="col-lg-6">
+          <div class="card lounge-card h-100">
+            <div class="lounge-media">
+              <img src="<?= htmlspecialchars($L['image_url'] ?: 'assets/img/lounge-placeholder.jpg') ?>" class="img-fluid" alt="">
+              <?php if ((int)$L['is_premium'] === 1): ?>
+                <span class="badge premium-badge">⭐ Premium</span>
+              <?php endif; ?>
+            </div>
 
-    <!-- Lounge card -->
-    <div class="col-lg-6">
-      <div class="card lounge-card h-100">
-        <div class="lounge-media">
-          <img src="assets/img/lounge-2.jpg" class="img-fluid" alt="">
-        </div>
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-start">
-            <div>
-              <div class="fw-semibold">FlyDreamAir Sydney Lounge</div>
-              <div class="text-muted small d-flex align-items-center gap-2 mt-1">
-                <img src="assets/img/location-secondary.svg" class="inline-icon tint-slate" alt="">
-                <span>Sydney Kingsford Smith Airport (SYD) – Terminal 1</span>
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <div class="fw-semibold"><?= htmlspecialchars($L['name']) ?></div>
+
+                  <div class="text-muted small d-flex align-items-center gap-2 mt-1">
+                    <img src="assets/img/location-secondary.svg" class="inline-icon tint-slate" alt="">
+                    <span>
+                      <?= htmlspecialchars($L['airport_name']) ?>
+                      (<?= htmlspecialchars($L['iata']) ?>)
+                      <?= $L['terminal'] ? ' – ' . htmlspecialchars($L['terminal']) : '' ?>
+                    </span>
+                  </div>
+
+                  <div class="text-muted small mt-1 d-flex align-items-center gap-2">
+                    <img src="assets/img/time-icon.svg" class="inline-icon tint-muted" alt="">
+                    <span><?= htmlspecialchars(substr($L['open_time'],0,5)) ?> – <?= htmlspecialchars(substr($L['close_time'],0,5)) ?></span>
+                  </div>
+                </div>
+
+                <?php
+                  // Occupancy placeholder (booking later). Show capacity as "0/capacity" for now.
+                  $used = 0;
+                  $cap  = (int)$L['capacity'];
+                  $cls  = $occClass($used, $cap);
+                ?>
+                <div class="small d-flex align-items-center gap-1 occupancy <?= $cls ?>">
+                  <img src="assets/img/guest-icon.svg" class="inline-icon occ-icon" alt="">
+                  <span class="occ-text"><?= $used ?>/<?= $cap ?></span>
+                </div>
               </div>
-              <div class="text-muted small mt-1 d-flex align-items-center gap-2">
-                <img src="assets/img/time-icon.svg" class="inline-icon tint-muted" alt="">
-                <span>04:30 – 23:30</span>
+
+              <!-- Feature chips -->
+              <div class="d-flex flex-wrap gap-2 mt-3">
+                <?php
+                  $maxChips = 4;
+                  $chips = array_slice($L['amenities'] ?? [], 0, $maxChips);
+                  foreach ($chips as $a) {
+                    echo '<span class="chip">' . htmlspecialchars($a['label']) . '</span>';
+                  }
+                  $remaining = max(0, count($L['amenities']) - $maxChips);
+                  if ($remaining > 0) echo '<span class="chip chip-more">+' . $remaining . ' more</span>';
+                ?>
+              </div>
+
+              <hr class="glass-hr my-3">
+
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="small">
+                  <div class="fw-semibold">$<?= number_format((float)$L['price_usd'], 2) ?> per person</div>
+                  <div class="text-muted">
+                    Basic member · pay-per-use for <?= (int)$L['is_premium'] ? 'premium lounges' : 'all lounges' ?>
+                  </div>
+                </div>
+
+                <!-- Booking later -->
+                <a href="#"
+                   class="btn btn-fda btn-fda-primary btn-fda-fit"
+                   style="height:32px; padding:0 14px;"
+                   data-bs-toggle="modal"
+                   data-bs-target="#bookingModal"
+                   data-lounge-occ="<?= $used ?>/<?= $cap ?>"
+                   data-lounge-title="<?= htmlspecialchars($L['name']) ?>"
+                   data-lounge-airport="<?= htmlspecialchars($L['airport_name']) ?> (<?= htmlspecialchars($L['iata']) ?>)<?= $L['terminal'] ? ' – '.htmlspecialchars($L['terminal']) : '' ?>"
+                   data-lounge-city="<?= htmlspecialchars(($L['city'] ?? '').($L['country'] ? ', '.$L['country'] : '')) ?>"
+                   data-lounge-hours="<?= htmlspecialchars(substr($L['open_time'],0,5) . ' – ' . substr($L['close_time'],0,5)) ?>"
+                   data-lounge-price="<?= htmlspecialchars($L['price_usd']) ?>"
+                   data-lounge-img="<?= htmlspecialchars($L['image_url'] ?: 'assets/img/lounge-placeholder.jpg') ?>">
+                  Book Now
+                </a>
               </div>
             </div>
-
-            <?php $used=67; $cap=150; $cls=$occClass($used,$cap); ?>
-            <div class="small d-flex align-items-center gap-1 occupancy <?= $cls ?>">
-              <img src="assets/img/guest-icon.svg" class="inline-icon occ-icon" alt="">
-              <span class="occ-text"><?= $used ?>/<?= $cap ?></span>
-            </div>
-          </div>
-
-          <div class="d-flex flex-wrap gap-2 mt-3">
-            <span class="chip"><i class="fa-solid fa-wifi"></i> Wi-Fi</span>
-            <span class="chip"><i class="fa-solid fa-martini-glass"></i> Bar</span>
-            <span class="chip"><i class="fa-solid fa-briefcase"></i> Business Center</span>
-            <span class="chip chip-more">+1 more</span>
-          </div>
-
-          <hr class="glass-hr my-3">
-
-          <div class="d-flex justify-content-between align-items-center">
-            <div class="small">
-              <div class="fw-semibold">$55 per person</div>
-              <div class="text-muted">Basic member · pay-per-use for all lounges</div>
-            </div>
-            <a href="#" class="btn btn-fda btn-fda-primary btn-fda-fit" style="height:32px; padding:0 14px;">Book Now</a>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Lounge card -->
-    <div class="col-lg-6">
-      <div class="card lounge-card h-100">
-        <div class="lounge-media">
-          <img src="assets/img/lounge-3.jpg" class="img-fluid" alt="">
-        </div>
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-start">
-            <div>
-              <div class="fw-semibold">FlyDreamAir Melbourne Lounge</div>
-              <div class="text-muted small d-flex align-items-center gap-2 mt-1">
-                <img src="assets/img/location-secondary.svg" class="inline-icon tint-slate" alt="">
-                <span>Melbourne Airport (MEL) – Terminal 2</span>
-              </div>
-              <div class="text-muted small mt-1 d-flex align-items-center gap-2">
-                <img src="assets/img/time-icon.svg" class="inline-icon tint-muted" alt="">
-                <span>05:00 – 22:30</span>
-              </div>
-            </div>
-
-            <?php $used=140; $cap=140; $cls=$occClass($used,$cap); ?>
-            <div class="small d-flex align-items-center gap-1 occupancy <?= $cls ?>">
-              <img src="assets/img/guest-icon.svg" class="inline-icon occ-icon" alt="">
-              <span class="occ-text"><?= $used ?>/<?= $cap ?></span>
-            </div>
-          </div>
-
-          <div class="d-flex flex-wrap gap-2 mt-3">
-            <span class="chip"><i class="fa-solid fa-wifi"></i> Wi-Fi</span>
-            <span class="chip"><i class="fa-solid fa-mug-saucer"></i> Coffee Bar</span>
-            <span class="chip"><i class="fa-solid fa-briefcase"></i> Business Center</span>
-            <span class="chip chip-more">+2 more</span>
-          </div>
-
-          <hr class="glass-hr my-3">
-
-          <div class="d-flex justify-content-between align-items-center">
-            <div class="small">
-              <div class="fw-semibold">$55 per person</div>
-              <div class="text-muted">Basic member · pay-per-use for all lounges</div>
-            </div>
-            <a href="#" class="btn btn-fda btn-fda-primary btn-fda-fit" style="height:32px; padding:0 14px;">Book Now</a>
           </div>
         </div>
-      </div>
-    </div>
-
+      <?php endforeach; ?>
+    <?php endif; ?>
   </div><!-- /row -->
 </div>
 

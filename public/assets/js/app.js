@@ -485,3 +485,35 @@ document.addEventListener('click', (e) => {
     }
   });
 })();
+
+// ===== Auto-submit for Find Lounges filters =====
+(function(){
+  const form = document.getElementById('loungeFilter');
+  if (!form) return;
+
+  // Debounce helper
+  const debounce = (fn, wait = 500) => {
+    let t;
+    return (...args) => {
+      clearTimeout(t);
+      t = setTimeout(() => fn.apply(null, args), wait);
+    };
+  };
+
+  const submitForm = () => form.requestSubmit ? form.requestSubmit() : form.submit();
+
+  // 1) Text search (debounced)
+  form.querySelectorAll('input[name="q"][data-autosubmit="debounce"]').forEach(inp => {
+    inp.addEventListener('input', debounce(submitForm, 500));
+  });
+
+  // 2) Country select (instant)
+  form.querySelectorAll('select[name="country"][data-autosubmit="instant"]').forEach(sel => {
+    sel.addEventListener('change', submitForm);
+  });
+
+  // 3) Amenity checkboxes (instant)
+  form.querySelectorAll('input[name="amen[]"][data-autosubmit="instant"]').forEach(cb => {
+    cb.addEventListener('change', submitForm);
+  });
+})();

@@ -318,3 +318,138 @@ document.addEventListener('click', function(e){
     document.getElementById(id)?.addEventListener('input', validatePayment);
   });
 })();
+
+// Booking Details modal hydrator
+document.addEventListener('click', (e) => {
+  const link = e.target.closest('[data-bs-target="#bookingDetailsModal"][data-bd-title]');
+  if (!link) return;
+
+  const modal = document.getElementById('bookingDetailsModal');
+  if (!modal) return;
+
+  const $ = (sel) => modal.querySelector(sel);
+
+  const set = (sel, txt) => { if (txt) $(sel).textContent = txt; };
+
+  set('#bd-title',   link.getAttribute('data-bd-title'));
+  set('#bd-airport', link.getAttribute('data-bd-airport'));
+  set('#bd-date',    link.getAttribute('data-bd-date'));
+  set('#bd-time',    link.getAttribute('data-bd-time'));
+  set('#bd-people',  link.getAttribute('data-bd-people'));
+  set('#bd-flight',  link.getAttribute('data-bd-flight'));
+  set('#bd-total',   link.getAttribute('data-bd-total'));
+
+  // status pill style
+  const status = link.getAttribute('data-bd-status') || 'confirmed';
+  const pill = $('#bd-status');
+  pill.textContent = status;
+  pill.classList.remove('status-ok','status-cancel','status-done');
+  if (status === 'cancelled') pill.classList.add('status-cancel');
+  else if (status === 'completed') pill.classList.add('status-done');
+  else pill.classList.add('status-ok'); // default
+
+  // banner text for cancelled vs confirmed
+  const banner = modal.querySelector('.bd-banner');
+  banner.classList.toggle('success', status !== 'cancelled');
+  banner.classList.toggle('danger',  status === 'cancelled');
+});
+
+
+// ===== Membership Upgrade modal =====
+(() => {
+  const modalEl = document.getElementById('upgradeModal');
+  if (!modalEl) return;
+
+  const $ = (sel) => modalEl.querySelector(sel);
+
+  function setHeader(stage){
+    const title = $('#ug-title');
+    const sub   = $('#ug-sub');
+    const back  = modalEl.querySelector('.ug-back');
+    const secure= $('#ug-secure-flag');
+
+    if (stage === 1){
+      title.textContent = 'Confirm Membership Upgrade';
+      sub.textContent   = 'Are you sure you want to upgrade your membership?';
+      title.classList.add('text-center');  sub.classList.add('text-center');
+      back.classList.add('d-none');
+      secure.classList.add('d-none');
+    } else {
+      title.textContent = 'Complete Your Upgrade';
+      sub.textContent   = 'Secure payment powered by FlyDreamAir';
+      title.classList.remove('text-center'); sub.classList.remove('text-center');
+      back.classList.remove('d-none');
+      secure.classList.remove('d-none');
+    }
+  }
+
+  const showStage = (n) => {
+    [...modalEl.querySelectorAll('.upgrade-stage')]
+      .forEach(s => s.classList.toggle('d-none', +s.dataset.stage !== n));
+    document.getElementById('ug-footer').classList.toggle('d-none', n !== 1);
+    setHeader(n);
+  };
+
+  function openFor(plan, price, benefits) {
+    modalEl.dataset.plan  = plan;
+    modalEl.dataset.price = String(price);
+
+    document.getElementById('ug-plan-chip').textContent = plan;
+    $('#ug-price').textContent = `$${price}`;
+
+    const ul = $('#ug-benefits');
+    ul.innerHTML = '';
+    (benefits || []).slice(0,4).forEach((b,i) => {
+      const li = document.createElement('li'); li.textContent = b; ul.appendChild(li);
+      const slot = modalEl.querySelector('#ug-b'+(i+1)); if (slot) slot.textContent = b;
+    });
+
+    $('#ug-plan-tag').textContent = `${plan} Membership`;
+    $('#ug-price-num').textContent = price;
+    $('#ug-pay-label').textContent = `Pay $${price} - Complete Upgrade`;
+
+    ['ug-name','ug-number','ug-exp','ug-cvv','ug-addr'].forEach(id => { const el = document.getElementById(id); if (el) el.value=''; });
+    document.getElementById('ug-pay').disabled = true;
+
+    showStage(1);
+    new bootstrap.Modal(modalEl).show();
+  }
+
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn-upgrade-tier');
+    if (!btn) return;
+    const plan = btn.getAttribute('data-plan') || '—';
+    const price = +(btn.getAttribute('data-price') || 0);
+    let benefits = [];
+    try { benefits = JSON.parse(btn.getAttribute('data-benefits') || '[]'); } catch {}
+    openFor(plan, price, benefits);
+  });
+
+  document.getElementById('ug-next')?.addEventListener('click', () => showStage(2));
+  modalEl.querySelector('.ug-back')?.addEventListener('click', () => showStage(1));
+
+  function validatePay(){
+    const ok =
+      ($('#ug-name').value || '').trim() &&
+      ($('#ug-number').value || '').replace(/\s+/g,'').length >= 12 &&
+      /^\d{2}\/\d{2}$/.test(($('#ug-exp').value || '').trim()) &&
+      /^\d{3,4}$/.test(($('#ug-cvv').value || '').trim()) &&
+      ($('#ug-addr').value || '').trim();
+    document.getElementById('ug-pay').disabled = !ok;
+  }
+  ['ug-name','ug-number','ug-exp','ug-cvv','ug-addr'].forEach(id=>{
+    document.getElementById(id)?.addEventListener('input', validatePay);
+  });
+
+  document.getElementById('ug-pay')?.addEventListener('click', () => {
+    if (document.getElementById('ug-pay').disabled) return;
+    const plan = modalEl.dataset.plan || '—';
+    bootstrap.Modal.getInstance(modalEl)?.hide();
+
+    const toastEl = document.getElementById('membershipToast');
+    if (toastEl){
+      toastEl.querySelector('#toast-plan').textContent = plan;
+      new bootstrap.Toast(toastEl, { delay: 4500 }).show();
+    }
+  });
+})();

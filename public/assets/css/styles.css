@@ -147,6 +147,8 @@ h5{font-weight:500;font-size:18px;}
 .visit-item{border:1px solid var(--fda-border-10);border-radius:12px;}
 .visit-item .card-body{position:relative;padding:16px 18px;}
 .visit-item .status-pill{position:absolute;right:18px;top:50%;transform:translateY(-50%);}
+.visit-item .status-pill{ right:18px; top:50%; transform:translateY(-50%); }
+
 
 .status-pill{display:inline-flex;align-items:center;justify-content:center;padding:.15rem .55rem;border-radius:999px;font-size:12px;font-weight:600;border:1px solid transparent;}
 .status-ok{background:#DCFCE7;border-color:#B9F8CF;color:#016630;}
@@ -272,3 +274,274 @@ h5{font-weight:500;font-size:18px;}
 .bullet-blue{background:#2B7FFF;}
 .bullet-green{background:#00C950;}
 .bullet-purple{background:#AD46FF;}
+
+/* ===== My Bookings ===== */
+
+/* Tabs reuse auth rail/pills already styled (.auth-tab-rail, .auth-tabs) */
+
+/* Booking card tweaks */
+.booking-item .card-body{
+  position: relative;
+  padding: 16px 18px 40px 18px;  /* bottom space for kebab */
+}
+
+/* Status pill at top-right */
+.booking-status{
+  position: absolute;
+  right: 18px;
+  top: 18px;
+}
+
+/* Actions at bottom-right; trigger is plain (no bg/border) */
+.booking-actions{
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+}
+.btn-kebab-plain{
+  background: transparent;
+  border: none;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  color: #121826;
+}
+.btn-kebab-plain:focus{ box-shadow: none; }
+
+/* Dropdown look stays consistent with other menus */
+.action-menu{ border-radius:12px; padding:.25rem; }
+.action-menu .dropdown-item{ border-radius:8px; padding:.45rem .65rem; }
+.action-menu .dropdown-item:hover{ background:#F2F4F7; }
+
+/* Status variants */
+.status-cancel{ background:#FEE2E2; border-color:#FCA5A5; color:#B91C1C; }
+.status-done{ background:#E0E7FF; border-color:#C7D2FE; color:#1D4ED8; }
+
+/* Filter buttons (from earlier) */
+.btn-filter{
+  background:#F3F4F6; border:1px solid #E5E7EB; color:#121826;
+  font-weight:500; font-size:12px; border-radius:10px; padding:.45rem .7rem;
+}
+.btn-filter:focus{ box-shadow:none; }
+.filter-dd .dropdown-menu{ border:1px solid rgba(0,0,0,.06); border-radius:10px; padding:.35rem; font-size:13px; }
+
+/* Stack meta rows (date/time/people) neatly */
+.meta-list .inline-icon{ margin-right:.25rem; }
+
+.bk-tab-rail{
+  width:260px;        /* fixed width for the rail */   /* center it */
+}
+
+@media (max-width:576px){
+  .bk-tab-rail{ width:100%; }
+}
+
+/* My Bookings: put status at the top-right (do NOT affect dashboard) */
+.booking-item .status-pill{
+  top: 18px;
+  right: 18px;
+  transform: none;   /* cancel dashboard's translateY(-50%) */
+}
+
+
+/* ===== Booking Details modal ===== */
+.booking-details-dialog{ max-width: 640px; }
+.booking-details-modal{ border-radius:16px; }
+
+.bd-banner{
+  border:1px solid #B9F8CF; background:#ECFFD6; color:#016630;
+  border-radius:12px; padding:12px 14px;
+}
+.bd-banner.success{ border-color:#B9F8CF; background:#DDFADC; color:#0D542B; }
+.bd-banner.danger{  border-color:#FCA5A5; background:#FEE2E2; color:#B91C1C; }
+.text-success-2{ color:#008236; }
+
+.bd-section{ border:1px solid var(--fda-border-10); border-radius:14px; }
+.bd-section .card-body{ padding:16px; }
+
+.bd-thumb{ width:72px; height:72px; background:#111; }
+
+.bd-info{ border:1px solid #C7D2FE; background:#EEF4FF; border-radius:14px; color: #193CB8;; }
+.bd-info ul{ margin:0; padding-left:1.1rem; color: #193CB8; }
+.btn-danger-subtle{
+  background:#FDE8E8; border:1px solid #FCA5A5; color:#B91C1C;
+  border-radius:10px; height:44px;
+}
+.btn-danger-subtle:hover{ filter:brightness(.98); }
+
+/* Sections: a touch more padding and vertical spacing */
+.bd-section .card-body { padding: 18px; }
+.bd-section { margin-bottom: 14px; }           /* slightly more than .mb-3 look */
+
+/* KVs / rows inside sections breathe more */
+.bd-section .row { row-gap: 10px; }            /* more than Bootstrap g-3 on dense screens */
+
+/* Line spacing in lists */
+.bd-info ul li { margin-bottom: 8px; }
+.bd-info ul li:last-child { margin-bottom: 0; }
+
+/* Banner a hair roomier */
+.bd-banner { padding: 14px 16px; }
+
+/* Side-by-side full-width buttons with slight gap (works at 392px too) */
+.booking-details-footer { display:flex; gap:10px; width:100%; }
+.booking-details-footer .btn { flex:1 1 0; height:44px; border-radius:10px; font-weight:700; }
+
+/* Cancel (red) per spec */
+.btn-bd-cancel {
+  background:#FB2C36; color:#fff; border: none;
+}
+.btn-bd-cancel:hover { filter: brightness(.97); }
+
+/* Close (ghost) to match the app’s ghost style but full-width */
+.btn-bd-close {
+  background:#fff; color:#121826; border:1px solid var(--fda-border-10);
+}
+.btn-bd-close:hover { background:#fafafa; }
+
+
+/* ===== Memberships ===== */
+.member-current{
+  border:1px solid #BEDBFF;
+  border-radius:14px;
+  background:#EEF4FF;
+  box-shadow: var(--fda-shadow-1);
+}
+.member-current .card-body{ padding:18px; }
+
+/* smaller label for “Your Current Membership” */
+.label-small{
+  font-size:12px;
+  font-weight:600;
+  color:#4B5563;
+}
+
+.badge-active{
+  background:#E7F8EC;
+  color:#0E7A3E;
+  border-radius:999px;
+  font-weight:600;
+  padding:.25rem .6rem;
+  font-size:12px;
+}
+
+/* tiles: icon on top, everything centered */
+.member-tile{
+  background:#fff; border:1px solid #E5E7EB; border-radius:12px; padding:14px;
+  display:flex; flex-direction:column; align-items:center; justify-content:flex-start; text-align:center;
+}
+.member-tile.vcenter .tile-ico{ margin-bottom:8px; }
+.member-tile .tile-ico{
+  width:36px; height:36px; border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+  background:#F3F6FF;
+}
+.member-tile .tile-lines .fw-semibold{ line-height:1.1; }
+
+/* Tier cards */
+.tier-card{ border:1px solid #E5E7EB; border-radius:14px; }
+.tier-card.current{ background:#F4F8FF; border-color:#D6E6FF; }
+
+/* Current Plan pill centered on top border */
+.pill-current{
+  position:absolute; top:-10px; left:50%; transform:translateX(-50%);
+  background:#E0F2FE; color:#0369A1;
+  border:1px solid #B6E1FC;
+  border-radius:999px; padding:.18rem .6rem; font-weight:600; font-size:12px;
+}
+.pill-centered{ /* helper semantic */ }
+
+/* top stack within tier — center align */
+.tier-top .ico-circle{
+  width:32px; height:32px; border-radius:999px; background:#F3F4F6;
+  display:inline-flex; align-items:center; justify-content:center; font-size:14px;
+}
+.halo-gold{ background:#FFF7D6 !important; }
+
+.member-list{ list-style:none; padding-left:0; margin:0; }
+.member-list li{ padding-left:20px; position:relative; margin-bottom:8px; }
+.member-list li::before{
+  content:"\f00c"; font: var(--fa-font-solid);
+  position:absolute; left:0; top:1px; font-size:12px; color:#16A34A;
+}
+
+/* line before guest allowance */
+.tier-sep{ border:0; border-top:1px solid #EFF1F4; margin:14px 0; }
+
+.price-wrap{ line-height:1; }
+
+/* feature table – unchanged from before */
+.member-table thead th{ font-weight:600; border-bottom:1px solid #E5E7EB; }
+.member-table tbody td{ padding:12px 8px; border-top:1px solid #F1F5F9; }
+.link-blue{ color:#2563EB; text-decoration:none; }
+.link-blue:hover{ text-decoration:underline; }
+
+.btn-disabled{
+  background:#E5E7EB; color:#6B7280; border:1px solid #E5E7EB;
+  font-weight:700; height:36px; border-radius:10px;
+}
+
+/* 4-up @xl, 2-up @md */
+@media (min-width: 1200px){
+  .col-xl-3{ flex:0 0 auto; width:25%; }
+}
+
+/* ===== Membership Upgrade modal ===== */
+.membership-modal-dialog{ max-width: 640px; }
+.membership-modal{ border-radius:16px; }
+
+/* Stage 1 elements */
+.ug-chip{
+  display:inline-flex; align-items:center; justify-content:center;
+  min-height:46px; padding:0 18px; border-radius:25px;
+  background:#155DFC; color:#fff; font-weight:700; font-size: 14px;
+}
+.ug-price{ font-size:20px; font-weight:800; color:#155DFC; line-height:1; }
+.ug-sub{ font-weight:600; color:#155DFC;font-size: 12px; }
+
+.ug-panel{
+  border:1px solid #BEDBFF; background:#EEF4FF; border-radius:14px; padding:16px;
+}
+.ug-panel-title{ font-weight:700; font-size: 13px; text-align:center; margin-bottom:6px; color:#1C398E; }
+.ug-bullets{ list-style: disc; margin:0; padding-left:22px; color:#193CB8; text-align:left; font-size: 10px; }
+.ug-bullets li{ margin:6px 0; }
+
+.ug-note{
+  display:flex; align-items:center; justify-content:center;
+  border:1px solid #FEE685; background:#F3F3F5; color:#973C00;
+  border-radius:12px; padding:10px 12px; font-weight:600; font-size: 10px;
+}
+
+/* Footer buttons (stage 1) */
+.btn-ug-primary{
+  background:#2B6CF6; color:#fff; border:none; height:44px; font-weight:700; border-radius:10px; font-size: 12px;
+}
+.btn-ug-primary:hover{ filter:brightness(.97); }
+.btn-ug-ghost{
+  background:#fff; color:#121826; border:1px solid var(--fda-border-10); height:44px; font-weight:700; border-radius:10px; font-size: 10px;
+}
+.btn-ug-ghost:hover{ background:#fafafa; }
+
+/* Tiny tag in stage 2 summary */
+.ug-tag{
+  display:inline-flex; align-items:center; padding:.2rem .6rem;
+  border-radius:999px; background:#E0F2FE; color:#0369A1; font-weight:600; font-size:12px; border:1px solid #B6E1FC;
+}
+
+/* ===== Success toast ===== */
+.fda-toast{
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 1080;
+  border-radius:16px;
+  box-shadow: 0 10px 25px rgba(0,0,0,.12);
+  border:1px solid #B9F8CF;
+}
+.fda-toast .toast-body{ padding:16px 18px; }
+.toast-check{
+  width:28px; height:28px; border-radius:50%; background:#DCFCE7; color:#065F46;
+  display:inline-flex; align-items:center; justify-content:center;
+}
+
+.membership-modal-dialog{ max-width:392px; }

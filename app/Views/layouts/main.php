@@ -16,6 +16,13 @@
     <?php require __DIR__ . '/../partials/header.php'; ?>
     <main class="py-4">
       <div class="container">
+
+        <?php if ($flash = get_flash()): ?>
+          <?php foreach ($flash as $type => $msg): ?>
+            <div class="alert alert-<?= $type === 'error' ? 'danger' : 'success' ?>"><?= $msg ?></div>
+          <?php endforeach; ?>
+        <?php endif; ?>
+
         <?php require __DIR__ . '/../pages/' . $template . '.php'; ?>
       </div>
     </main>

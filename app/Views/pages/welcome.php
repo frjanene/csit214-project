@@ -71,6 +71,13 @@
         <h2 class="h4 text-center fw-bold mb-1">Welcome</h2>
         <p class="text-center text-muted mb-4">Access your premium lounge experience</p>
 
+        <!-- Flash inside modal -->
+        <?php if ($flash = get_flash()): ?>
+          <?php foreach ($flash as $type => $msg): ?>
+            <div class="alert alert-<?= $type === 'error' ? 'danger' : 'success' ?>"><?= $msg ?></div>
+          <?php endforeach; ?>
+        <?php endif; ?>
+
         <!-- Tab rail: 31.5px rail, 25.5px active pill -->
         <div class="auth-tab-rail mb-4">
           <ul class="nav nav-pills auth-tabs" id="authTab" role="tablist">
@@ -86,12 +93,12 @@
         <div class="tab-content">
           <!-- Sign In -->
           <div class="tab-pane fade show active" id="signin-pane" role="tabpanel" aria-labelledby="signin-tab">
-            <form>
+            <form action="<?= base_href('signin') ?>" method="post" autocomplete="on">
               <div class="mb-3">
                 <label class="form-label small fw-semibold d-flex align-items-center gap-2">
                   <img src="assets/img/email-icon.svg" width="16" height="16" alt=""><span>Email Address</span>
                 </label>
-                <input type="email" class="form-control fda-input" placeholder="john@example.com">
+                <input type="email" class="form-control fda-input" name="email" placeholder="john@example.com" required>
               </div>
 
               <div class="mb-3">
@@ -99,23 +106,20 @@
                   <img src="assets/img/password-icon.svg" width="16" height="16" alt=""><span>Password</span>
                 </label>
                 <div class="fda-input-wrap">
-                  <input type="password" class="form-control fda-input" placeholder="Enter your password" data-password>
+                  <input type="password" class="form-control fda-input" name="password" placeholder="Enter your password" data-password required>
                   <button type="button" class="toggle-pass" aria-label="Show password"><i class="fa-regular fa-eye"></i></button>
                 </div>
               </div>
 
               <div class="d-flex justify-content-between align-items-center mb-3 auth-links">
                 <div class="form-check">
-                  <input class="form-check-input" type="checkbox" id="rememberMe">
+                  <input class="form-check-input" type="checkbox" id="rememberMe" disabled>
                   <label class="form-check-label small" for="rememberMe">Remember me</label>
                 </div>
                 <a href="<?= base_href('forgot') ?>" class="small fw-semibold forgot">Forgot password?</a>
-
               </div>
 
-              <button type="submit" class="btn btn-auth btn-auth-primary w-100 mb-3">
-                Sign In
-              </button>
+              <button type="submit" class="btn btn-auth btn-auth-primary w-100 mb-3">Sign In</button>
 
               <hr class="my-3">
 
@@ -142,15 +146,15 @@
 
           <!-- Sign Up -->
           <div class="tab-pane fade" id="signup-pane" role="tabpanel" aria-labelledby="signup-tab">
-            <form>
+            <form action="<?= base_href('signup') ?>" method="post" autocomplete="on">
               <div class="row g-3">
                 <div class="col-sm-6">
                   <label class="form-label small fw-semibold">First Name</label>
-                  <input type="text" class="form-control fda-input" placeholder="John">
+                  <input type="text" class="form-control fda-input" name="first_name" placeholder="John" required>
                 </div>
                 <div class="col-sm-6">
                   <label class="form-label small fw-semibold">Last Name</label>
-                  <input type="text" class="form-control fda-input" placeholder="Doe">
+                  <input type="text" class="form-control fda-input" name="last_name" placeholder="Doe" required>
                 </div>
               </div>
 
@@ -158,7 +162,7 @@
                 <label class="form-label small fw-semibold d-flex align-items-center gap-2">
                   <img src="assets/img/email-icon.svg" width="16" height="16" alt=""><span>Email Address</span>
                 </label>
-                <input type="email" class="form-control fda-input" placeholder="john@example.com">
+                <input type="email" class="form-control fda-input" name="email" placeholder="john@example.com" required>
               </div>
 
               <div class="mt-3">
@@ -166,7 +170,7 @@
                   <img src="assets/img/password-icon.svg" width="16" height="16" alt=""><span>Password</span>
                 </label>
                 <div class="fda-input-wrap">
-                  <input type="password" class="form-control fda-input" placeholder="Create a strong password" data-password>
+                  <input type="password" class="form-control fda-input" name="password" placeholder="Create a strong password" data-password required>
                   <button type="button" class="toggle-pass" aria-label="Show password"><i class="fa-regular fa-eye"></i></button>
                 </div>
               </div>
@@ -176,13 +180,13 @@
                   <img src="assets/img/password-icon.svg" width="16" height="16" alt=""><span>Confirm Password</span>
                 </label>
                 <div class="fda-input-wrap">
-                  <input type="password" class="form-control fda-input" placeholder="Confirm your password" data-password>
+                  <input type="password" class="form-control fda-input" name="password_confirm" placeholder="Confirm your password" data-password required>
                   <button type="button" class="toggle-pass" aria-label="Show password"><i class="fa-regular fa-eye"></i></button>
                 </div>
               </div>
 
               <div class="form-check mt-3">
-                <input class="form-check-input" type="checkbox" id="tos">
+                <input class="form-check-input" type="checkbox" id="tos" required>
                 <label class="form-check-label small" for="tos">
                   I accept the <a href="#" class="text-decoration-none fw-semibold">Terms of Service</a> and <a href="#" class="text-decoration-none fw-semibold">Privacy Policy</a>
                 </label>
@@ -193,9 +197,7 @@
                 <label class="form-check-label small" for="newsletter">Subscribe to newsletter for exclusive offers</label>
               </div>
 
-              <button type="submit" class="btn btn-auth btn-auth-primary w-100 mb-3">
-                Create Account
-              </button>
+              <button type="submit" class="btn btn-auth btn-auth-primary w-100 mb-3">Create Account</button>
 
               <hr class="my-3">
 

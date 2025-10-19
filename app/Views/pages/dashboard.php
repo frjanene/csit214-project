@@ -4,7 +4,8 @@
     <!-- Page header -->
     <div class="d-flex align-items-center justify-content-between mb-4">
         <div>
-            <h2 class="mb-1 fw-bold">Welcome back, John Smith</h2>
+            <?php $u = current_user(); $greet = $u ? ($u['first_name'].' '.$u['last_name']) : 'Guest'; ?>
+            <h2 class="mb-1 fw-bold">Welcome back, <?= htmlspecialchars($greet) ?></h2>
             <div class="text-muted">Here's what's happening with your lounge access</div>
         </div>
         <a href="<?= base_href('find') ?>" class="btn btn-fda btn-fda-primary btn-fda-fit"

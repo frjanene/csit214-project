@@ -18,6 +18,15 @@
   <body class="auth-shell">
     <main class="py-5">
       <div class="container">
+
+        <?php
+        // Show flash here for bare pages EXCEPT welcome (welcome shows flash inside the modal)
+        if (($template ?? '') !== 'welcome' && ($flash = get_flash())):
+          foreach ($flash as $type => $msg): ?>
+            <div class="alert alert-<?= $type === 'error' ? 'danger' : 'success' ?>"><?= $msg ?></div>
+          <?php endforeach;
+        endif; ?>
+
         <?php require __DIR__ . '/../pages/' . $template . '.php'; ?>
       </div>
     </main>

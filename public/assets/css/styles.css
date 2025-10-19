@@ -1,6 +1,4 @@
-/* FlyDreamAir — Main Styles */
-
-/* ========== 1) Tokens & Base ========== */
+/* ===== Tokens & Base ===== */
 :root{
   --fda-primary:#030213;
   --fda-secondary:#ECEEF2;
@@ -20,9 +18,9 @@
 }
 
 @font-face{font-family:"Inter";src:url("../fonts/Inter_24pt-Regular.ttf") format("truetype");font-weight:400;font-style:normal;font-display:swap;}
-@font-face{font-family:"Inter";src:url("../fonts/Inter_24pt-Medium.ttf") format("truetype");font-weight:500;font-style:normal;font-display:swap;}
-@font-face{font-family:"Inter";src:url("../fonts/Inter_24pt-SemiBold.ttf") format("truetype");font-weight:600;font-style:normal;font-display:swap;}
-@font-face{font-family:"Inter";src:url("../fonts/Inter_24pt-Bold.ttf") format("truetype");font-weight:700;font-style:normal;font-display:swap;}
+@font-face{font-family:"Inter";src:url("../fonts/Inter_24pt-Medium.ttf")  format("truetype");font-weight:500;font-style:normal;font-display:swap;}
+@font-face{font-family:"Inter";src:url("../fonts/Inter_24pt-SemiBold.ttf")format("truetype");font-weight:600;font-style:normal;font-display:swap;}
+@font-face{font-family:"Inter";src:url("../fonts/Inter_24pt-Bold.ttf")    format("truetype");font-weight:700;font-style:normal;font-display:swap;}
 
 html,body{
   font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
@@ -34,12 +32,12 @@ html,body{
 .btn:focus,
 .btn:focus-visible{outline:none!important;box-shadow:none!important;}
 
-/* ========== 2) Layout ========== */
+/* ===== Layout ===== */
 .auth-shell{min-height:100dvh;background:linear-gradient(135deg,#EEF2FF 0%,#FFF 50%,#F9FAFB 100%);}
 .page-shell{min-height:100dvh;background:#fff;}
 h5{font-weight:500;font-size:18px;}
 
-/* ========== 3) Reusable Components ========== */
+/* ===== Components ===== */
 .brand-row{display:flex;align-items:center;justify-content:center;gap:.75rem;}
 .brand-logo{width:48px;height:48px;border-radius:50%;object-fit:cover;}
 .brand-title{font-weight:700;font-size:24px;line-height:1;}
@@ -58,7 +56,6 @@ h5{font-weight:500;font-size:18px;}
 }
 .btn-fda-primary{background:var(--fda-primary);color:#fff;border:none;}
 .btn-fda-primary:hover{background:#0a0a16;color:#fff;}
-.btn-fda-primary:disabled{opacity:.55;cursor:not-allowed;}
 .btn-fda-ghost{background:transparent;color:var(--fda-text);border:1px solid var(--fda-border-10);}
 .btn-fda-ghost:hover{background:#fafafa;}
 .btn-fda-secondary{background:var(--fda-secondary);color:var(--fda-text);border:none;}
@@ -66,6 +63,7 @@ h5{font-weight:500;font-size:18px;}
 .btn-link-plain{background:transparent;border:none;color:var(--fda-primary);font-weight:600;padding:.25rem 0;text-decoration:none;}
 .btn-link-plain:hover{text-decoration:underline;}
 .btn-fda-fit{width:auto!important;max-width:none!important;display:inline-flex;}
+.btn-fda-primary:disabled{opacity:.55;cursor:not-allowed;}
 
 .fda-input-wrap{position:relative;}
 .fda-input{
@@ -82,7 +80,6 @@ h5{font-weight:500;font-size:18px;}
 .hr-or{display:flex;align-items:center;gap:.75rem;color:var(--fda-text-muted);font-size:12px;}
 .hr-or::before,.hr-or::after{content:"";flex:1;height:1px;background:var(--fda-border-10);}
 .glass-hr{border:0;border-top:1px solid var(--fda-border-10);opacity:1;}
-
 .note-info{color:var(--fda-text-muted);}
 
 .icon-check-circle{
@@ -97,7 +94,7 @@ h5{font-weight:500;font-size:18px;}
 .inline-icon{width:16px;height:16px;vertical-align:-2px;}
 .tint-muted{filter:invert(43%) sepia(6%) saturate(356%) hue-rotate(197deg) brightness(92%) contrast(88%);}
 
-/* ========== 4) Auth ========== */
+/* ===== Auth ===== */
 .auth-modal-dialog{max-width:392px;}
 .auth-modal{background:#fff;border:none;border-radius:16px;box-shadow:var(--fda-shadow-1),var(--fda-shadow-2);}
 
@@ -108,16 +105,14 @@ h5{font-weight:500;font-size:18px;}
   width:100%;height:25.5px;line-height:25.5px;border-radius:999px;padding:0 .5rem;background:transparent;
   color:var(--fda-text);font-weight:600;font-size:12px;text-align:center;
 }
-.auth-tabs .nav-link.active,
-.nav-pills .nav-link.active,
-.nav-pills .show>.nav-link{background:#fff;color:var(--fda-primary);}
+.auth-tabs .nav-link.active,.nav-pills .nav-link.active,.nav-pills .show>.nav-link{background:#fff;color:var(--fda-primary);}
 .auth-links .forgot{color:var(--fda-primary);text-decoration:none;}
 .auth-links .forgot:hover{text-decoration:underline;}
 .btn-auth{height:32px;border-radius:6.75px;font-size:12px;font-weight:600;}
 .btn-auth-primary{background:var(--fda-primary);color:#fff;border:none;}
 .btn-auth-primary:hover{background:#0a0a16;color:#fff;}
 
-/* ========== 5) Header/Nav ========== */
+/* ===== Header/Nav ===== */
 .header-bar{border-bottom:1px solid var(--fda-border-10);}
 .header-bar .container{padding:10px 0;}
 .brand-stack .brand-title{line-height:1.1;}
@@ -138,7 +133,7 @@ h5{font-weight:500;font-size:18px;}
 }
 .navbar .brand-sub{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--fda-text-muted);}
 
-/* ========== 6) Dashboard Cards ========== */
+/* ===== Dashboard Cards ===== */
 .metric-card{border:1px solid var(--fda-border-10);border-radius:12px;}
 .metric-card .card-body{position:relative;padding:18px 64px 18px 18px;}
 .metric-icon{position:absolute;right:18px;top:50%;transform:translateY(-50%);width:32px;height:32px;}
@@ -157,10 +152,9 @@ h5{font-weight:500;font-size:18px;}
 .tint-orange{filter:invert(34%) sepia(86%) saturate(2990%) hue-rotate(7deg) brightness(101%) contrast(105%);}
 .tint-green{filter:invert(37%) sepia(97%) saturate(563%) hue-rotate(88deg) brightness(95%) contrast(94%);}
 
-/* ========== 7) Find Lounges ========== */
+/* ===== Find Lounges ===== */
 .lounge-filter .card-body{padding:14px;}
-.lounge-filter .form-control{height:36px;}
-.country-select{height:36px;}
+.lounge-filter .form-control,.country-select{height:36px;}
 
 .lounge-card{border:1px solid var(--fda-border-10);border-radius:14px;overflow:hidden;}
 .lounge-card .card-body{padding:16px;}
@@ -189,7 +183,7 @@ h5{font-weight:500;font-size:18px;}
 .occupancy.occ-mid .occ-icon{filter:invert(23%) sepia(35%) saturate(2657%) hue-rotate(12deg) brightness(92%) contrast(94%);}
 .occupancy.occ-high .occ-icon{filter:invert(19%) sepia(89%) saturate(2606%) hue-rotate(353deg) brightness(90%) contrast(111%);}
 
-/* ========== 8) Booking Modal ========== */
+/* ===== Booking Modal ===== */
 .booking-modal-dialog{max-width:392px;}
 .booking-modal{background:#fff;border-radius:16px;box-shadow:var(--fda-shadow-1),var(--fda-shadow-2);}
 .booking-lounge-head{background:#FBFBFC;}
@@ -252,7 +246,7 @@ h5{font-weight:500;font-size:18px;}
   padding:10px 12px;border-radius:10px;font-weight:600;display:flex;align-items:center;font-size:12px;margin-bottom:12px;
 }
 
-/* Stage 2 CTA */
+/* Stage 2 call-to-action */
 .btn-pay{
   background:#155DFC!important;color:#fff!important;border:none;height:44px;font-weight:700;font-size:12px;border-radius:10px;
 }
@@ -260,7 +254,7 @@ h5{font-weight:500;font-size:18px;}
 .btn-pay:disabled{opacity:.6;cursor:not-allowed;}
 .tos{font-size:10px;line-height:1.3;}
 
-/* ========== 9) Content Utilities ========== */
+/* ===== Content Utilities ===== */
 .welcome-title{font-weight:700;font-size:30px;}
 .welcome-sub{color:var(--fda-text-muted);font-size:13px;}
 .demo-note{color:#90A1B9;font-size:9.84px;}
@@ -274,7 +268,7 @@ h5{font-weight:500;font-size:18px;}
 .bullet-purple{background:#AD46FF;}
 
 /* ===== My Bookings ===== */
-.booking-item .card-body{position:relative;padding:16px 18px 40px 18px;}
+.booking-item .card-body{position:relative;padding:16px 18px 40px;}
 .booking-status{position:absolute;right:18px;top:18px;}
 .booking-actions{position:absolute;right:12px;bottom:12px;}
 .btn-kebab-plain{background:transparent;border:none;width:24px;height:24px;padding:0;color:#121826;}
@@ -284,41 +278,35 @@ h5{font-weight:500;font-size:18px;}
 .action-menu .dropdown-item:hover{background:#F2F4F7;}
 .status-cancel{background:#FEE2E2;border-color:#FCA5A5;color:#B91C1C;}
 .status-done{background:#E0E7FF;border-color:#C7D2FE;color:#1D4ED8;}
-
 .btn-filter{
   background:#F3F4F6;border:1px solid #E5E7EB;color:#121826;
   font-weight:500;font-size:12px;border-radius:10px;padding:.45rem .7rem;
 }
 .btn-filter:focus{box-shadow:none;}
 .filter-dd .dropdown-menu{border:1px solid rgba(0,0,0,.06);border-radius:10px;padding:.35rem;font-size:13px;}
-
 .meta-list .inline-icon{margin-right:.25rem;}
-.bk-tab-rail{width:260px;margin:0 auto;}
+.bk-tab-rail{width:260px;}
 @media (max-width:576px){.bk-tab-rail{width:100%;}}
-
 .booking-item .status-pill{top:18px;right:18px;transform:none;}
 
 /* ===== Booking Details modal ===== */
 .booking-details-dialog{max-width:640px;}
 .booking-details-modal{border-radius:16px;}
-
-.bd-banner{border:1px solid #B9F8CF;background:#ECFFD6;color:#016630;border-radius:12px;padding:14px 16px;}
+.bd-banner{
+  border:1px solid #B9F8CF;background:#ECFFD6;color:#016630;
+  border-radius:12px;padding:14px 16px;
+}
 .bd-banner.success{border-color:#B9F8CF;background:#DDFADC;color:#0D542B;}
 .bd-banner.danger{border-color:#FCA5A5;background:#FEE2E2;color:#B91C1C;}
 .text-success-2{color:#008236;}
 
 .bd-section{border:1px solid var(--fda-border-10);border-radius:14px;margin-bottom:14px;}
 .bd-section .card-body{padding:18px;}
-.bd-section .row{row-gap:10px;}
+.bd-thumb{width:72px;height:72px;background:#111;}
 .bd-info{border:1px solid #C7D2FE;background:#EEF4FF;border-radius:14px;color:#193CB8;}
 .bd-info ul{margin:0;padding-left:1.1rem;color:#193CB8;}
 .bd-info ul li{margin-bottom:8px;}
 .bd-info ul li:last-child{margin-bottom:0;}
-
-.bd-thumb{width:72px;height:72px;background:#111;}
-.btn-danger-subtle{background:#FDE8E8;border:1px solid #FCA5A5;color:#B91C1C;border-radius:10px;height:44px;}
-.btn-danger-subtle:hover{filter:brightness(.98);}
-
 .booking-details-footer{display:flex;gap:10px;width:100%;}
 .booking-details-footer .btn{flex:1 1 0;height:44px;border-radius:10px;font-weight:700;}
 .btn-bd-cancel{background:#FB2C36;color:#fff;border:none;}
@@ -331,51 +319,36 @@ h5{font-weight:500;font-size:18px;}
   border:1px solid #BEDBFF;border-radius:14px;background:#EEF4FF;box-shadow:var(--fda-shadow-1);
 }
 .member-current .card-body{padding:18px;}
-
 .label-small{font-size:12px;font-weight:600;color:#4B5563;}
-.badge-active{
-  background:#E7F8EC;color:#0E7A3E;border-radius:999px;font-weight:600;padding:.25rem .6rem;font-size:12px;
-}
+.badge-active{background:#E7F8EC;color:#0E7A3E;border-radius:999px;font-weight:600;padding:.25rem .6rem;font-size:12px;}
 
 .member-tile{
   background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:14px;
   display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;
 }
 .member-tile.vcenter .tile-ico{margin-bottom:8px;}
-.member-tile .tile-ico{
-  width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#F3F6FF;
-}
+.member-tile .tile-ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:#F3F6FF;}
 .member-tile .tile-lines .fw-semibold{line-height:1.1;}
 
 .tier-card{border:1px solid #E5E7EB;border-radius:14px;}
 .tier-card.current{background:#F4F8FF;border-color:#D6E6FF;}
-
 .pill-current{
   position:absolute;top:-10px;left:50%;transform:translateX(-50%);
   background:#E0F2FE;color:#0369A1;border:1px solid #B6E1FC;border-radius:999px;padding:.18rem .6rem;font-weight:600;font-size:12px;
 }
 .pill-centered{}
-
-.tier-top .ico-circle{
-  width:32px;height:32px;border-radius:999px;background:#F3F4F6;
-  display:inline-flex;align-items:center;justify-content:center;font-size:14px;
-}
+.tier-top .ico-circle{width:32px;height:32px;border-radius:999px;background:#F3F4F6;display:inline-flex;align-items:center;justify-content:center;font-size:14px;}
 .halo-gold{background:#FFF7D6!important;}
-
 .member-list{list-style:none;padding-left:0;margin:0;}
 .member-list li{padding-left:20px;position:relative;margin-bottom:8px;}
 .member-list li::before{content:"\f00c";font:var(--fa-font-solid);position:absolute;left:0;top:1px;font-size:12px;color:#16A34A;}
-
 .tier-sep{border:0;border-top:1px solid #EFF1F4;margin:14px 0;}
 .price-wrap{line-height:1;}
-
 .member-table thead th{font-weight:600;border-bottom:1px solid #E5E7EB;}
-.member-table tbody td{padding:12px 8px;border-top:1px solid #F1F5F9;}
+.member-table tbody td{padding:12px 8px;border-top:1px solid #F1F5N9;}
 .link-blue{color:#2563EB;text-decoration:none;}
 .link-blue:hover{text-decoration:underline;}
-
 .btn-disabled{background:#E5E7EB;color:#6B7280;border:1px solid #E5E7EB;font-weight:700;height:36px;border-radius:10px;}
-
 @media (min-width:1200px){.col-xl-3{flex:0 0 auto;width:25%;}}
 
 /* ===== Membership Upgrade modal ===== */
@@ -388,24 +361,21 @@ h5{font-weight:500;font-size:18px;}
 }
 .ug-price{font-size:20px;font-weight:800;color:#155DFC;line-height:1;}
 .ug-sub{font-weight:600;color:#155DFC;font-size:12px;}
-
 .ug-panel{border:1px solid #BEDBFF;background:#EEF4FF;border-radius:14px;padding:16px;}
 .ug-panel-title{font-weight:700;font-size:13px;text-align:center;margin-bottom:6px;color:#1C398E;}
 .ug-bullets{list-style:disc;margin:0;padding-left:22px;color:#193CB8;text-align:left;font-size:10px;}
 .ug-bullets li{margin:6px 0;}
-
 .ug-note{
-  display:flex;align-items:center;justify-content:center;
-  border:1px solid #FEE685;background:#F3F3F5;color:#973C00;border-radius:12px;padding:10px 12px;font-weight:600;font-size:10px;
+  display:flex;align-items:center;justify-content:center;border:1px solid #FEE685;background:#F3F3F5;color:#973C00;
+  border-radius:12px;padding:10px 12px;font-weight:600;font-size:10px;
 }
-
 .btn-ug-primary{background:#2B6CF6;color:#fff;border:none;height:44px;font-weight:700;border-radius:10px;font-size:12px;}
 .btn-ug-primary:hover{filter:brightness(.97);}
 .btn-ug-ghost{background:#fff;color:#121826;border:1px solid var(--fda-border-10);height:44px;font-weight:700;border-radius:10px;font-size:10px;}
 .btn-ug-ghost:hover{background:#fafafa;}
-
 .ug-tag{
-  display:inline-flex;align-items:center;padding:.2rem .6rem;border-radius:999px;background:#E0F2FE;color:#0369A1;font-weight:600;font-size:12px;border:1px solid #B6E1FC;
+  display:inline-flex;align-items:center;padding:.2rem .6rem;border-radius:999px;background:#E0F2FE;color:#0369A1;
+  font-weight:600;font-size:12px;border:1px solid #B6E1FC;
 }
 
 /* ===== Toast ===== */

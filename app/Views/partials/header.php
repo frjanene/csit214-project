@@ -3,15 +3,16 @@
   $activeRoute = $_GET['r'] ?? 'dashboard';
   $is = fn($route) => $activeRoute === $route ? 'active' : '';
 
-  $user = current_user();
-  $isGuest = !$user;
+  // IMPORTANT: don't shadow page-level $user — use $navUser here
+  $navUser = current_user();
+  $isGuest = !$navUser;
 
   // Determine current membership plan for signed-in users
   $planSlug = 'basic';
-  if ($user) {
+  if ($navUser) {
     require_once __DIR__ . '/../../Models/Membership.php';
     try {
-      $p = Membership::userCurrent((int)$user['id']);
+      $p = Membership::userCurrent((int)$navUser['id']);
       if ($p && !empty($p['slug'])) {
         $planSlug = strtolower($p['slug']);
       }
@@ -25,7 +26,7 @@
   $badgeText = $isGuest ? 'GUEST' : (strtoupper($planSlug) . ' Member');
 
   // Avatar initials
-  $initials = $isGuest ? 'GU' : initials_from($user['first_name'], $user['last_name']);
+  $initials = $isGuest ? 'GU' : initials_from($navUser['first_name'], $navUser['last_name']);
 ?>
 <nav class="navbar navbar-expand-lg header-bar bg-white">
   <div class="container align-items-center">

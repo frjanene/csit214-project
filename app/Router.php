@@ -19,6 +19,9 @@ $routes = [
   'memberships' => 'MembershipController@index',
   'membership_upgrade' => 'MembershipController@upgrade',
   'profile'     => 'ProfileController@index',
+  'profile_update'   => 'ProfileController@update',
+  'profile_password' => 'ProfileController@password',
+  'profile_prefs'    => 'ProfileController@preferences',
   'forgot'      => 'PasswordController@request',
   'forgot_done' => 'PasswordController@sent',
 ];

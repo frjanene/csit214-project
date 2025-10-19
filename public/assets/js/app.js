@@ -509,3 +509,41 @@ document.addEventListener('click', (e) => {
     cb.addEventListener('change', submitForm);
   });
 })();
+
+
+// ===== Profile: edit/save toggle =====
+(() => {
+  const form = document.getElementById('profileForm');
+  if (!form) return;
+
+  const inputs = [...form.querySelectorAll('.profile-input')];
+  const btnEdit   = document.querySelector('.profile-edit-btn');
+  const btnSave   = document.querySelector('.profile-save-btn');
+  const btnCancel = document.querySelector('.profile-cancel-btn');
+
+  // remember original values for cancel
+  let orig = null;
+
+  function setEditing(on) {
+    inputs.forEach(i => i.disabled = !on);
+    btnEdit?.classList.toggle('d-none', on);
+    btnSave?.classList.toggle('d-none', !on);
+    btnCancel?.classList.toggle('d-none', !on);
+  }
+
+  btnEdit?.addEventListener('click', () => {
+    // snapshot original values
+    orig = inputs.map(i => ({ el: i, val: i.value }));
+    setEditing(true);
+  });
+
+  btnCancel?.addEventListener('click', () => {
+    if (orig) orig.forEach(o => { o.el.value = o.val; });
+    setEditing(false);
+  });
+
+  // Just in case user submits without clicking Save button:
+  form.addEventListener('submit', () => {
+    inputs.forEach(i => i.disabled = false);
+  });
+})();

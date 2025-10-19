@@ -193,6 +193,46 @@ h5{font-weight:500;font-size:18px;}
 .modal-footer{gap:12px;}
 .modal-footer .btn-fda{width:auto;max-width:none;}
 
+/* ===== Booking Modal — Stage 3 (exact UI match) ===== */
+.done-card{
+  background:#EEF4FF;            /* light blue */
+  border:1px solid #BEDBFF;
+  border-radius:12px;
+}
+.qr-img{
+  width:96px;height:96px;object-fit:cover;
+  background:#fff;border:1px solid rgba(0,0,0,.06);
+}
+.price-pill{
+  display:inline-flex;align-items:center;justify-content:center;
+  padding:.2rem .6rem;border-radius:999px;font-weight:700;font-size:12px;
+  background:#E7F8EC;color:#0E7A3E;border:1px solid #B9F8CF; /* green “Paid” look */
+}
+
+/* Stacked white action buttons */
+.btn-block-white{
+  width:100%; height:44px; border-radius:10px; font-weight:700; font-size:12px;
+  background:#fff; color:#121826; border:1px solid #E5E7EB;
+}
+.btn-block-white:hover{background:#fafafa;}
+
+/* Yellow email alert panel */
+.confirm-alert{
+  background:#FFF5D6; border:1px solid #FEE685; color:#973C00;
+  border-radius:12px; padding:12px 14px;
+}
+
+/* Big dark primary continue */
+.btn-stage3-primary{
+  height:44px; border-radius:10px; font-weight:700; font-size:12px;
+  background:var(--fda-primary); color:#fff; border:none;
+}
+.btn-stage3-primary:hover{filter:brightness(.97);}
+
+/* (Footer hidden by JS on stages 2 & 3) */
+
+
+
 .premium-chip-modal{background:#FEF3C6;border:1px solid #FEE685;color:#973C00;border-radius:999px;padding:.18rem .6rem;font-size:12px;display:inline-block;}
 
 .flight-info{background:#EFF6FF;border:1px solid #BEDBFF;border-radius:12px;}

@@ -294,20 +294,50 @@
         </div>
         <!-- /Stage 2 -->
 
-        <!-- Stage 3 -->
-        <div class="booking-stage d-none text-center" data-stage="3">
+        <!-- Stage 3 (updated to match UI exactly) -->
+        <div class="booking-stage d-none text-center" data-stage="3" id="bk-stage-3">
+          <!-- Success Icon -->
           <div class="icon-check-circle mx-auto mb-3">
             <img src="assets/img/check.svg" class="icon-check" alt="">
           </div>
           <h5 class="fw-bold mb-1">🎉 Booking Confirmed!</h5>
-          <div class="text-muted mb-3">Your lounge access is all set.</div>
+          <div class="text-muted mb-3">Your lounge access is all set. Get ready to relax in style!</div>
 
-          <div class="p-3 rounded border text-start mb-3">
-            <div class="fw-semibold" id="done-title">—</div>
-            <div class="text-muted small" id="done-airport">—</div>
-            <div class="text-muted small" id="done-datetime">—</div>
-            <span class="badge bg-success-subtle text-success fw-semibold mt-2">Paid</span>
+          <!-- Unified booking card with QR + details -->
+          <div class="done-card p-3 rounded-4 mb-3 text-start">
+            <div class="d-flex align-items-center gap-3">
+              <img src="assets/img/demo-qr.png" alt="Entry QR Code" class="qr-img rounded-2">
+              <div class="flex-grow-1">
+                <div class="fw-semibold" id="done-title">FlyDreamAir Premium Lounge</div>
+                <div class="text-muted small" id="done-datetime">Sunday, December 20<br>11:30 AM – 2:00 PM</div>
+                <span class="price-pill mt-2" id="done-amount">$85 Paid</span>
+              </div>
+            </div>
           </div>
+
+          <!-- Stacked white action buttons -->
+          <button class="btn btn-block-white mb-2" id="btn-download-pass">
+            <i class="fa-solid fa-download me-2"></i>Download
+          </button>
+          <button class="btn btn-block-white mb-3" id="btn-share-pass">
+            <i class="fa-solid fa-share-nodes me-2"></i>Share
+          </button>
+
+          <!-- Yellow email alert -->
+          <div class="confirm-alert mb-3 text-start">
+            <div class="d-flex align-items-start gap-2">
+              <i class="fa-regular fa-envelope mt-1"></i>
+              <div>
+                <div class="fw-semibold">Confirmation email sent!</div>
+                <div class="small">Check your email for your digital pass and full details.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Continue -->
+          <button class="btn btn-stage3-primary w-100" id="btn-done-continue" data-bs-dismiss="modal">
+            Continue
+          </button>
         </div>
         <!-- /Stage 3 -->
 

@@ -239,22 +239,23 @@
       .forEach(s => s.classList.toggle('d-none', +s.dataset.stage !== n));
 
     // header + secure flag
-    backBtn.classList.toggle('d-none', n === 1);
     setHeaderForStage(n);
+    // hide back button on stage 1 & 3 (no need to go back from success)
+    backBtn.classList.toggle('d-none', n === 1 || n === 3);
 
-    // hide footer entirely on Stage 2
+    // hide footer on stages 2 and 3
     const footer = modalEl.querySelector('.modal-footer');
-    if (footer) footer.classList.toggle('d-none', n === 2);
+    if (footer) footer.classList.toggle('d-none', n === 2 || n === 3);
 
-    if (n===1){
+    if (n === 1){
       validateStage1();
-    } else if (n===2){
-      // nothing in footer to manage
-    } else {
-      // Stage 3: footer is visible; primary becomes "Close"
-      if (footer) footer.classList.remove('d-none');
-      primaryBtn.disabled = false;
-      primaryLabel.textContent = 'Close';
+    } else if (n === 2){
+      // no footer controls here
+    } else if (n === 3){
+      // no footer; if you have an internal "Continue" button, wire it:
+      document.getElementById('btn-done-continue')?.addEventListener('click', () => {
+        bootstrap.Modal.getInstance(modalEl)?.hide();
+      }, { once:true });
     }
   }
 
@@ -339,11 +340,26 @@
   document.getElementById('btn-pay-stage2')?.addEventListener('click', () => {
     const btn = document.getElementById('btn-pay-stage2');
     if (!btn || btn.disabled) return;
-    $('#done-title').textContent    = $('#sum2-title').textContent;
-    $('#done-airport').textContent  = $('#sum2-airport').textContent;
-    $('#done-datetime').textContent = `${$('#sum2-date').textContent} · ${$('#sum2-time').textContent}`;
+
+    // Pull from Stage 2 summary
+    const title = $('#sum2-title')?.textContent || '';
+    const date  = $('#sum2-date')?.textContent || '';
+    const time  = $('#sum2-time')?.textContent || '';
+    const price = +(modalEl.dataset.price || 0);
+
+    // Fill Stage 3 (new structure)
+    const tEl = document.getElementById('done-title');
+    if (tEl) tEl.textContent = title;
+
+    const dtEl = document.getElementById('done-datetime');
+    if (dtEl) dtEl.innerHTML = `${date}<br>${time}`;
+
+    const amtEl = document.getElementById('done-amount');
+    if (amtEl) amtEl.textContent = `$${price} Paid`;
+
     showStage(3);
   });
+
 
   // hook up payment validation inputs
   ['pay-name','pay-number','pay-exp','pay-cvv','pay-addr'].forEach(id=>{

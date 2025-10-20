@@ -77,7 +77,17 @@
 
 
 
-// Booking Details modal hydrator
+// small helper
+const postForm = async (url, data) => {
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams(data).toString()
+  });
+  try { return await resp.json(); } catch { return { ok:false, error:'Bad response' }; }
+};
+
+// ---------- Booking Details modal hydrator ----------
 document.addEventListener('click', (e) => {
   const link = e.target.closest('[data-bs-target="#bookingDetailsModal"][data-bd-title]');
   if (!link) return;
@@ -86,9 +96,9 @@ document.addEventListener('click', (e) => {
   if (!modal) return;
 
   const $ = (sel) => modal.querySelector(sel);
+  const set = (sel, txt) => { if ($(sel) && txt != null) $(sel).textContent = txt; };
 
-  const set = (sel, txt) => { if (txt) $(sel).textContent = txt; };
-
+  // basic fields
   set('#bd-title',   link.getAttribute('data-bd-title'));
   set('#bd-airport', link.getAttribute('data-bd-airport'));
   set('#bd-date',    link.getAttribute('data-bd-date'));
@@ -97,21 +107,145 @@ document.addEventListener('click', (e) => {
   set('#bd-flight',  link.getAttribute('data-bd-flight'));
   set('#bd-total',   link.getAttribute('data-bd-total'));
 
-  // status pill style
-  const status = link.getAttribute('data-bd-status') || 'confirmed';
-  const pill = $('#bd-status');
-  pill.textContent = status;
-  pill.classList.remove('status-ok','status-cancel','status-done');
-  if (status === 'cancelled') pill.classList.add('status-cancel');
-  else if (status === 'completed') pill.classList.add('status-done');
-  else pill.classList.add('status-ok'); // default
+  // payment label (prefer explicit, else infer from total)
+  const payLbl = link.getAttribute('data-bd-payment');
+  const total  = (link.getAttribute('data-bd-total') || '').toUpperCase();
+  set('#bd-payment', payLbl || (total && total !== 'FREE' ? 'Pay Per Use' : 'Membership Access'));
 
-  // banner text for cancelled vs confirmed
+  // reservation id (optional)
+  const rid = link.getAttribute('data-bd-res-id');
+  if (rid) set('#bd-res-id', `Reservation #${rid}`);
+
+  // store booking id on the modal for actions (cancel)
+  const linkBid = link.getAttribute('data-bd-id');
+  const cardBid = link.closest('.booking-item')?.querySelector('[data-action="cancel-booking"]')?.getAttribute('data-booking-id');
+  const bookingId = linkBid || cardBid || '';
+  modal.dataset.bookingId = bookingId;
+
+  // status pill style
+  const status = (link.getAttribute('data-bd-status') || 'confirmed').toLowerCase();
+  const pill = $('#bd-status');
+  if (pill) {
+    pill.textContent = status;
+    pill.classList.remove('status-ok','status-cancel','status-done');
+    if (status === 'cancelled') pill.classList.add('status-cancel');
+    else if (status === 'completed' || status === 'completed ') pill.classList.add('status-done');
+    else pill.classList.add('status-ok');
+  }
+
+  // banner state (success vs cancelled)
   const banner = modal.querySelector('.bd-banner');
-  banner.classList.toggle('success', status !== 'cancelled');
-  banner.classList.toggle('danger',  status === 'cancelled');
+  if (banner) {
+    banner.classList.toggle('success', status !== 'cancelled');
+    banner.classList.toggle('danger',  status === 'cancelled');
+    // tweak banner copy
+    const titleEl = banner.querySelector('.fw-semibold.fs-6');
+    const subEl   = banner.querySelector('.small');
+    if (status === 'cancelled') {
+      if (titleEl) titleEl.textContent = 'Booking Cancelled';
+      if (subEl)   subEl.textContent   = 'This reservation is no longer active.';
+    } else {
+      if (titleEl) titleEl.textContent = 'Booking Confirmed';
+      if (subEl)   subEl.textContent   = 'Your lounge access is ready!';
+    }
+  }
+
+  // QR (if data-bd-qr present)
+  const qrAttr = link.getAttribute('data-bd-qr');
+  const qrImgEl = modal.querySelector('.bd-section img[alt="QR"]');
+  if (qrImgEl) {
+    if (qrAttr) {
+      qrImgEl.src = qrAttr;
+      qrImgEl.classList.remove('d-none');
+    } else {
+      // hide if not provided
+      qrImgEl.classList.add('d-none');
+      qrImgEl.removeAttribute('src');
+    }
+  }
+
+  // Enable/disable Cancel button in modal based on status
+  const cancelBtn = document.getElementById('bd-cancel');
+  if (cancelBtn) cancelBtn.disabled = (status === 'cancelled' || status === 'completed');
+
+}, { capture: true });
+
+// ---------- Cancel booking (kebab + modal footer) ----------
+async function cancelBooking(bookingId, originEl) {
+  if (!bookingId) return;
+
+  // simple confirm
+  const sure = window.confirm('Cancel this booking? This action cannot be undone.');
+  if (!sure) return;
+
+  const res = await postForm('?r=booking_cancel', { id: String(bookingId) });
+  if (!res.ok) {
+    alert(res.error || 'Failed to cancel booking.');
+    return;
+  }
+
+  // Update the card UI in-place
+  // 1) find the nearest card from originEl if available
+  let card = originEl?.closest('.booking-item');
+  // 2) else try to locate by data-booking-id
+  if (!card) {
+    card = document.querySelector(`.booking-item [data-action="cancel-booking"][data-booking-id="${bookingId}"]`)?.closest('.booking-item');
+  }
+
+  if (card) {
+    // Update status pill
+    const pill = card.querySelector('.booking-status');
+    if (pill) {
+      pill.textContent = 'cancelled';
+      pill.classList.remove('status-ok','status-done');
+      pill.classList.add('status-cancel');
+    }
+    // Disable cancel link(s)
+    card.querySelectorAll('[data-action="cancel-booking"]').forEach(a => { a.classList.add('disabled'); a.setAttribute('aria-disabled', 'true'); });
+
+    // If this was in the "Upcoming" tab, you may want to move it to "Past" list.
+    // (Optional: requires DOM reparenting; skipping for simplicity.)
+  }
+
+  // Also reflect in the modal if it's open
+  const modal = document.getElementById('bookingDetailsModal');
+  if (modal && modal.classList.contains('show') && modal.dataset.bookingId === String(bookingId)) {
+    const pill = modal.querySelector('#bd-status');
+    if (pill) {
+      pill.textContent = 'cancelled';
+      pill.classList.remove('status-ok','status-done');
+      pill.classList.add('status-cancel');
+    }
+    const banner = modal.querySelector('.bd-banner');
+    if (banner) {
+      banner.classList.remove('success'); banner.classList.add('danger');
+      const titleEl = banner.querySelector('.fw-semibold.fs-6');
+      const subEl   = banner.querySelector('.small');
+      if (titleEl) titleEl.textContent = 'Booking Cancelled';
+      if (subEl)   subEl.textContent   = 'This reservation is no longer active.';
+    }
+    // Disable the modal cancel button
+    const cancelBtn = document.getElementById('bd-cancel');
+    if (cancelBtn) cancelBtn.disabled = true;
+  }
+}
+
+// kebab-menu "Cancel Booking"
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-action="cancel-booking"][data-booking-id]');
+  if (!btn) return;
+  e.preventDefault();
+  const bid = btn.getAttribute('data-booking-id');
+  cancelBooking(bid, btn);
 });
 
+// modal footer "Cancel Booking"
+document.getElementById('bd-cancel')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  const modal = document.getElementById('bookingDetailsModal');
+  const bid = modal?.dataset.bookingId || '';
+  cancelBooking(bid, modal);
+});
 
 // ===== Membership Upgrade modal (server-backed) =====
 (() => {

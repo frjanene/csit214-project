@@ -177,4 +177,39 @@ class Booking extends Model {
   return $row ?: null;
 }
 
+  public static function listUserBookings(int $userId): array {
+    $sql = "
+      SELECT
+        b.*,
+        l.name  AS lounge_name,
+        l.is_premium,
+        a.iata  AS airport_iata,
+        a.name  AS airport_name
+      FROM bookings b
+      JOIN lounges  l ON l.id = b.lounge_id
+      JOIN airports a ON a.id = l.airport_id
+      WHERE b.user_id = :uid
+      ORDER BY b.visit_date DESC, b.start_time DESC
+    ";
+    $st = self::db()->prepare($sql);
+    $st->execute([':uid' => $userId]);
+    $rows = $st->fetchAll() ?: [];
+    return $rows;
+  }
+
+
+  /** Soft-cancel a booking that belongs to the user */
+  public static function cancelBooking(int $bookingId, int $userId): bool {
+    $sql = "
+      UPDATE bookings
+         SET status = 'cancelled'
+       WHERE id = :id AND user_id = :uid AND status = 'confirmed'
+       LIMIT 1
+    ";
+    $st = self::db()->prepare($sql);
+    $st->execute([':id'=>$bookingId, ':uid'=>$userId]);
+    return $st->rowCount() === 1;
+  }
+  
+
 }

@@ -1,3 +1,56 @@
+<?php
+// app/Views/pages/bookings.php
+
+// Small helpers for the view (no side effects)
+$h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
+
+$statusClass = function ($status) {
+  $s = strtolower(trim((string)$status));
+  return $s === 'cancelled' ? 'status-cancel' : ($s === 'completed' ? 'status-done' : 'status-ok');
+};
+
+$prettyDate = function ($ymd) {
+  // Expect Y-m-d; fallback to original on parse errors
+  try {
+    $dt = new DateTimeImmutable($ymd);
+    return $dt->format('l, F j, Y');
+  } catch (Throwable $e) {
+    return $ymd;
+  }
+};
+
+$timeRange = function ($start, $end) {
+  $s = substr((string)$start, 0, 5);
+  $e = substr((string)$end,   0, 5);
+  return trim($s.' - '.$e);
+};
+
+$peopleLabel = fn($n) => ($n = (int)$n) <= 1 ? '1 person' : ($n.' people');
+
+$paymentLabel = function ($method, $total) {
+  $m = strtolower((string)$method);
+  if ($m === 'membership') return 'Membership Access';
+  $t = (float)$total;
+  return $t > 0 ? 'Pay Per Use' : 'Membership Access';
+};
+
+$totalLabel = function ($total) {
+  $t = (float)$total;
+  return $t > 0 ? '$'.number_format($t, 0) : 'FREE';
+};
+
+$airportBadge = function ($iata) use ($h) {
+  $iata = strtoupper(trim((string)$iata));
+  return $iata !== '' ? $h($iata) : '—';
+};
+
+// Defensive defaults if controller didn’t pass something
+$upcoming        = $upcoming        ?? [];
+$past            = $past            ?? [];
+$count_upcoming  = $count_upcoming  ?? count($upcoming);
+$count_past      = $count_past      ?? count($past);
+?>
+
 <!-- My Bookings -->
 <div class="container py-4">
 
@@ -38,12 +91,12 @@
     <ul class="nav nav-pills auth-tabs" id="bookingTabs" role="tablist">
       <li class="nav-item" role="presentation">
         <button class="nav-link active" id="upcoming-tab" data-bs-toggle="pill" data-bs-target="#upcoming-pane" type="button" role="tab">
-          Upcoming (3)
+          Upcoming (<?= (int)$count_upcoming ?>)
         </button>
       </li>
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="past-tab" data-bs-toggle="pill" data-bs-target="#past-pane" type="button" role="tab">
-          Past (2)
+          Past (<?= (int)$count_past ?>)
         </button>
       </li>
     </ul>
@@ -55,138 +108,93 @@
     <div class="tab-pane fade show active" id="upcoming-pane" role="tabpanel" aria-labelledby="upcoming-tab">
       <div class="d-flex flex-column gap-3">
 
-        <!-- Card A (confirmed) -->
-        <div class="visit-item card booking-item">
-          <div class="card-body">
-            <span class="status-pill status-ok booking-status">confirmed</span>
-
-            <div class="fw-semibold">FlyDreamAir Sydney Lounge</div>
-            <div class="text-muted small">SYD</div>
-
-            <div class="meta-list text-muted small mt-2">
-              <div class="d-flex align-items-center gap-2 mb-1">
-                <img src="assets/img/booking-icon.svg" class="inline-icon tint-muted" alt="">
-                <span>Sunday, December 20, 2026</span>
-              </div>
-              <div class="d-flex align-items-center gap-2 mb-1">
-                <img src="assets/img/time-icon.svg" class="inline-icon tint-muted" alt="">
-                <span>09:00 - 13:00</span>
-              </div>
-              <div class="d-flex align-items-center gap-2">
-                <img src="assets/img/guest-icon.svg" class="inline-icon tint-muted" alt="">
-                <span>3 people</span>
-              </div>
+        <?php if (empty($upcoming)): ?>
+          <div class="card booking-item">
+            <div class="card-body text-center text-muted">
+              <div class="mb-1 fw-semibold">No upcoming bookings</div>
+              <div class="small">When you book a lounge, it’ll appear here.</div>
             </div>
+          </div>
+        <?php else: ?>
+          <?php foreach ($upcoming as $r): ?>
+            <?php
+              // Expect keys: id, lounge_name, iata, visit_date, start_time, end_time, people_count, method, total_usd, status, flight_number, booked_on, qr_code
+              $title    = $r['lounge_name'] ?? 'Lounge';
+              $iata     = $r['iata'] ?? '';
+              $dateTxt  = $prettyDate($r['visit_date'] ?? '');
+              $timeTxt  = $timeRange($r['start_time'] ?? '', $r['end_time'] ?? '');
+              $people   = $peopleLabel($r['people_count'] ?? 1);
+              $status   = $r['status'] ?? 'confirmed';
+              $payLbl   = $paymentLabel($r['method'] ?? '', $r['total_usd'] ?? 0);
+              $totalLbl = $totalLabel($r['total_usd'] ?? 0);
+              $flight   = trim((string)($r['flight_number'] ?? ''));
+              $flightTxt= $flight ? ($flight.' at '.substr($r['end_time'] ?? '', 0, 5)) : '—';
+              $qrImg    = !empty($r['qr_code']) ? (base_href('qr_img').'&code='.rawurlencode($r['qr_code']).'&s=180') : '';
+            ?>
+            <div class="visit-item card booking-item">
+              <div class="card-body">
+                <span class="status-pill <?= $statusClass($status) ?> booking-status"><?= $h($status) ?></span>
 
-            <div class="small fw-semibold mt-3">Membership Access</div>
-            <div class="text-muted small">Booked on 12/3/2026</div>
+                <div class="fw-semibold"><?= $h($title) ?></div>
+                <div class="text-muted small"><?= $airportBadge($iata) ?></div>
 
-            <!-- Kebab actions (bottom-right, plain) -->
-            <div class="dropdown booking-actions">
-              <button class="btn btn-kebab-plain" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="More">
-                <i class="fa-solid fa-ellipsis-vertical"></i>
-              </button>
-              <ul class="dropdown-menu dropdown-menu-end action-menu shadow-sm">
-                <li>
-                    <a class="dropdown-item"
-                        href="#"
-                        data-bs-toggle="modal"
-                        data-bs-target="#bookingDetailsModal"
-                        data-bd-title="FlyDreamAir Sydney Lounge"
-                        data-bd-airport="SYD"
-                        data-bd-date="Sunday, December 20, 2026"
-                        data-bd-time="09:00 - 13:00"
-                        data-bd-people="3 people total"
-                        data-bd-flight="FD123 at 14:30"
-                        data-bd-status="confirmed"
-                        data-bd-total="FREE">
-                        View Details
-                    </a>
+                <div class="meta-list text-muted small mt-2">
+                  <div class="d-flex align-items-center gap-2 mb-1">
+                    <img src="assets/img/booking-icon.svg" class="inline-icon tint-muted" alt="">
+                    <span><?= $h($dateTxt) ?></span>
+                  </div>
+                  <div class="d-flex align-items-center gap-2 mb-1">
+                    <img src="assets/img/time-icon.svg" class="inline-icon tint-muted" alt="">
+                    <span><?= $h($timeTxt) ?></span>
+                  </div>
+                  <div class="d-flex align-items-center gap-2">
+                    <img src="assets/img/guest-icon.svg" class="inline-icon tint-muted" alt="">
+                    <span><?= $h($people) ?></span>
+                  </div>
+                </div>
+
+                <div class="small fw-semibold mt-3"><?= $h($payLbl) ?></div>
+                <?php if (!empty($r['created_at'])): ?>
+                  <div class="text-muted small">Booked on <?= $h((new DateTimeImmutable($r['created_at']))->format('n/j/Y')) ?></div>
+                <?php endif; ?>
+
+                <!-- Kebab actions (bottom-right, plain) -->
+                <div class="dropdown booking-actions">
+                  <button class="btn btn-kebab-plain" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="More">
+                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end action-menu shadow-sm">
+                    <li>
+                      <a class="dropdown-item"
+                         href="#"
+                         data-bs-toggle="modal"
+                         data-bs-target="#bookingDetailsModal"
+                         data-bd-title="<?= $h($title) ?>"
+                         data-bd-airport="<?= $airportBadge($iata) ?>"
+                         data-bd-date="<?= $h($dateTxt) ?>"
+                         data-bd-time="<?= $h($timeTxt) ?>"
+                         data-bd-people="<?= $h($people.' total') ?>"
+                         data-bd-flight="<?= $h($flight ? $flight.' at '.substr($r['start_time'] ?? '', 0, 5) : '—') ?>"
+                         data-bd-status="<?= $h($status) ?>"
+                         data-bd-total="<?= $h($totalLbl) ?>"
+                         <?php if ($qrImg): ?>data-bd-qr="<?= $h($qrImg) ?>"<?php endif; ?>
+                      >View Details</a>
                     </li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item text-danger" href="#">Cancel Booking</a></li>
-              </ul>
-            </div>
-          </div>
-        </div>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                      <a class="dropdown-item text-danger"
+                         href="#"
+                         data-action="cancel-booking"
+                         data-booking-id="<?= (int)($r['id'] ?? 0) ?>"
+                      >Cancel Booking</a>
+                    </li>
+                  </ul>
+                </div>
 
-        <!-- Card B (confirmed) -->
-        <div class="visit-item card booking-item">
-          <div class="card-body">
-            <span class="status-pill status-ok booking-status">confirmed</span>
-
-            <div class="fw-semibold">FlyDreamAir Premium Lounge</div>
-            <div class="text-muted small">SIN</div>
-
-            <div class="meta-list text-muted small mt-2">
-              <div class="d-flex align-items-center gap-2 mb-1">
-                <img src="assets/img/booking-icon.svg" class="inline-icon tint-muted" alt="">
-                <span>Tuesday, December 15, 2026</span>
-              </div>
-              <div class="d-flex align-items-center gap-2 mb-1">
-                <img src="assets/img/time-icon.svg" class="inline-icon tint-muted" alt="">
-                <span>14:00 - 18:00</span>
-              </div>
-              <div class="d-flex align-items-center gap-2">
-                <img src="assets/img/guest-icon.svg" class="inline-icon tint-muted" alt="">
-                <span>2 people</span>
               </div>
             </div>
-
-            <div class="small fw-semibold mt-3">Membership Access</div>
-            <div class="text-muted small">Booked on 12/1/2026</div>
-
-            <div class="dropdown booking-actions">
-              <button class="btn btn-kebab-plain" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="More">
-                <i class="fa-solid fa-ellipsis-vertical"></i>
-              </button>
-              <ul class="dropdown-menu dropdown-menu-end action-menu shadow-sm">
-                <li><a class="dropdown-item" href="#">View Details</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item text-danger" href="#">Cancel Booking</a></li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        <!-- Card C (cancelled example) -->
-        <div class="visit-item card booking-item">
-          <div class="card-body">
-            <span class="status-pill status-cancel booking-status">cancelled</span>
-
-            <div class="fw-semibold">FlyDreamAir Dubai Lounge</div>
-            <div class="text-muted small">DXB</div>
-
-            <div class="meta-list text-muted small mt-2">
-              <div class="d-flex align-items-center gap-2 mb-1">
-                <img src="assets/img/booking-icon.svg" class="inline-icon tint-muted" alt="">
-                <span>Friday, December 25, 2026</span>
-              </div>
-              <div class="d-flex align-items-center gap-2 mb-1">
-                <img src="assets/img/time-icon.svg" class="inline-icon tint-muted" alt="">
-                <span>11:00 - 13:00</span>
-              </div>
-              <div class="d-flex align-items-center gap-2">
-                <img src="assets/img/guest-icon.svg" class="inline-icon tint-muted" alt="">
-                <span>1 person</span>
-              </div>
-            </div>
-
-            <div class="small fw-semibold mt-3">Membership Access</div>
-            <div class="text-muted small">Booked on 12/5/2026</div>
-
-            <div class="dropdown booking-actions">
-              <button class="btn btn-kebab-plain" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="More">
-                <i class="fa-solid fa-ellipsis-vertical"></i>
-              </button>
-              <ul class="dropdown-menu dropdown-menu-end action-menu shadow-sm">
-                <li><a class="dropdown-item" href="#">View Details</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item text-danger" href="#">Cancel Booking</a></li>
-              </ul>
-            </div>
-          </div>
-        </div>
+          <?php endforeach; ?>
+        <?php endif; ?>
 
       </div>
     </div>
@@ -195,79 +203,79 @@
     <div class="tab-pane fade" id="past-pane" role="tabpanel" aria-labelledby="past-tab">
       <div class="d-flex flex-column gap-3">
 
-        <!-- Past 1 (completed) -->
-        <div class="visit-item card booking-item">
-          <div class="card-body">
-            <span class="status-pill status-done booking-status">completed</span>
-
-            <div class="fw-semibold">FlyDreamAir Melbourne Lounge</div>
-            <div class="text-muted small">MEL</div>
-
-            <div class="meta-list text-muted small mt-2">
-              <div class="d-flex align-items-center gap-2 mb-1">
-                <img src="assets/img/booking-icon.svg" class="inline-icon tint-muted" alt="">
-                <span>Monday, November 10, 2026</span>
-              </div>
-              <div class="d-flex align-items-center gap-2 mb-1">
-                <img src="assets/img/time-icon.svg" class="inline-icon tint-muted" alt="">
-                <span>08:00 - 10:00</span>
-              </div>
-              <div class="d-flex align-items-center gap-2">
-                <img src="assets/img/guest-icon.svg" class="inline-icon tint-muted" alt="">
-                <span>1 person</span>
-              </div>
-            </div>
-
-            <div class="small fw-semibold mt-3">Membership Access</div>
-            <div class="text-muted small">Booked on 11/1/2026</div>
-
-            <div class="dropdown booking-actions">
-              <button class="btn btn-kebab-plain" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="More">
-                <i class="fa-solid fa-ellipsis-vertical"></i>
-              </button>
-              <ul class="dropdown-menu dropdown-menu-end action-menu shadow-sm">
-                <li><a class="dropdown-item" href="#">View Details</a></li>
-              </ul>
+        <?php if (empty($past)): ?>
+          <div class="card booking-item">
+            <div class="card-body text-center text-muted">
+              <div class="mb-1 fw-semibold">No past bookings</div>
+              <div class="small">Completed and cancelled reservations will appear here.</div>
             </div>
           </div>
-        </div>
+        <?php else: ?>
+          <?php foreach ($past as $r): ?>
+            <?php
+              $title    = $r['lounge_name'] ?? 'Lounge';
+              $iata     = $r['iata'] ?? '';
+              $dateTxt  = $prettyDate($r['visit_date'] ?? '');
+              $timeTxt  = $timeRange($r['start_time'] ?? '', $r['end_time'] ?? '');
+              $people   = $peopleLabel($r['people_count'] ?? 1);
+              $status   = $r['status'] ?? 'completed';
+              $payLbl   = $paymentLabel($r['method'] ?? '', $r['total_usd'] ?? 0);
+              $totalLbl = $totalLabel($r['total_usd'] ?? 0);
+              $flight   = trim((string)($r['flight_number'] ?? ''));
+              $qrImg    = !empty($r['qr_code']) ? (base_href('qr_img').'&code='.rawurlencode($r['qr_code']).'&s=180') : '';
+            ?>
+            <div class="visit-item card booking-item">
+              <div class="card-body">
+                <span class="status-pill <?= $statusClass($status) ?> booking-status"><?= $h($status) ?></span>
 
-        <!-- Past 2 (cancelled) -->
-        <div class="visit-item card booking-item">
-          <div class="card-body">
-            <span class="status-pill status-cancel booking-status">cancelled</span>
+                <div class="fw-semibold"><?= $h($title) ?></div>
+                <div class="text-muted small"><?= $airportBadge($iata) ?></div>
 
-            <div class="fw-semibold">FlyDreamAir Paris Lounge</div>
-            <div class="text-muted small">CDG</div>
+                <div class="meta-list text-muted small mt-2">
+                  <div class="d-flex align-items-center gap-2 mb-1">
+                    <img src="assets/img/booking-icon.svg" class="inline-icon tint-muted" alt="">
+                    <span><?= $h($dateTxt) ?></span>
+                  </div>
+                  <div class="d-flex align-items-center gap-2 mb-1">
+                    <img src="assets/img/time-icon.svg" class="inline-icon tint-muted" alt="">
+                    <span><?= $h($timeTxt) ?></span>
+                  </div>
+                  <div class="d-flex align-items-center gap-2">
+                    <img src="assets/img/guest-icon.svg" class="inline-icon tint-muted" alt="">
+                    <span><?= $h($people) ?></span>
+                  </div>
+                </div>
 
-            <div class="meta-list text-muted small mt-2">
-              <div class="d-flex align-items-center gap-2 mb-1">
-                <img src="assets/img/booking-icon.svg" class="inline-icon tint-muted" alt="">
-                <span>Friday, October 30, 2026</span>
-              </div>
-              <div class="d-flex align-items-center gap-2 mb-1">
-                <img src="assets/img/time-icon.svg" class="inline-icon tint-muted" alt="">
-                <span>12:00 - 14:00</span>
-              </div>
-              <div class="d-flex align-items-center gap-2">
-                <img src="assets/img/guest-icon.svg" class="inline-icon tint-muted" alt="">
-                <span>2 people</span>
+                <div class="small fw-semibold mt-3"><?= $h($payLbl) ?></div>
+
+                <div class="dropdown booking-actions">
+                  <button class="btn btn-kebab-plain" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="More">
+                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end action-menu shadow-sm">
+                    <li>
+                      <a class="dropdown-item"
+                         href="#"
+                         data-bs-toggle="modal"
+                         data-bs-target="#bookingDetailsModal"
+                         data-bd-title="<?= $h($title) ?>"
+                         data-bd-airport="<?= $airportBadge($iata) ?>"
+                         data-bd-date="<?= $h($dateTxt) ?>"
+                         data-bd-time="<?= $h($timeTxt) ?>"
+                         data-bd-people="<?= $h($people.' total') ?>"
+                         data-bd-flight="<?= $h($flight ?: '—') ?>"
+                         data-bd-status="<?= $h($status) ?>"
+                         data-bd-total="<?= $h($totalLbl) ?>"
+                         <?php if ($qrImg): ?>data-bd-qr="<?= $h($qrImg) ?>"<?php endif; ?>
+                      >View Details</a>
+                    </li>
+                  </ul>
+                </div>
+
               </div>
             </div>
-
-            <div class="small fw-semibold mt-3">Membership Access</div>
-            <div class="text-muted small">Booked on 10/20/2026</div>
-
-            <div class="dropdown booking-actions">
-              <button class="btn btn-kebab-plain" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="More">
-                <i class="fa-solid fa-ellipsis-vertical"></i>
-              </button>
-              <ul class="dropdown-menu dropdown-menu-end action-menu shadow-sm">
-                <li><a class="dropdown-item" href="#">View Details</a></li>
-              </ul>
-            </div>
-          </div>
-        </div>
+          <?php endforeach; ?>
+        <?php endif; ?>
 
       </div>
     </div>

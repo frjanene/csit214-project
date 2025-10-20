@@ -447,7 +447,63 @@
     document.getElementById('done-datetime').innerHTML = `${res.booking.date}<br>${res.booking.start} – ${res.booking.end}`;
     const amtEl = document.getElementById('done-amount');
     amtEl && (amtEl.textContent = (res.booking.total > 0) ? `$${Number(res.booking.total).toFixed(0)} Paid` : '$0.00');
+
+    // --- NEW: wire up real QR image and download/share actions ---
+    const qrImgEl = modalEl.querySelector('.qr-img');
+    if (qrImgEl) {
+      // Prefer same-origin PNG; fallback to landing URL if needed
+      const qrImgUrl = res.booking.qr_img || '';
+      qrImgEl.src = qrImgUrl || 'assets/img/demo-qr.png';
+      qrImgEl.alt = 'Entry QR Code';
+
+      // Optional: click QR to open the deeplink/landing URL in a new tab
+      if (res.booking.qr_url) {
+        qrImgEl.style.cursor = 'pointer';
+        qrImgEl.onclick = () => window.open(res.booking.qr_url, '_blank');
+      }
+    }
+
+    // Download button -> download the PNG
+    const dlBtn = document.getElementById('btn-download-pass');
+    if (dlBtn) {
+      dlBtn.onclick = () => {
+        const href = res.booking.qr_img || res.booking.qr_url;
+        if (!href) return;
+
+        const a = document.createElement('a');
+        a.href = href;
+        a.download = `FlyDreamAir-QR-${res.booking.id}.png`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      };
+    }
+
+    // Share button -> use Web Share if available; otherwise open the deeplink
+    const shBtn = document.getElementById('btn-share-pass');
+    if (shBtn) {
+      shBtn.onclick = async () => {
+        const shareUrl = res.booking.qr_url || res.booking.qr_img || location.href;
+        const shareText = `Your lounge pass for ${res.booking.title} on ${res.booking.date} (${res.booking.start}–${res.booking.end}).`;
+
+        if (navigator.share) {
+          try {
+            await navigator.share({
+              title: 'FlyDreamAir Lounge Pass',
+              text: shareText,
+              url: shareUrl
+            });
+          } catch (_) {
+            // user cancelled or share not possible — no-op
+          }
+        } else {
+          window.open(shareUrl, '_blank');
+        }
+      };
+    }
+
     showStage(3);
+
   });
 
   // payment inputs validation (only enforced if needed)

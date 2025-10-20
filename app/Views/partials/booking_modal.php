@@ -347,7 +347,7 @@ $__plan =
           <!-- Unified booking card with QR + details -->
           <div class="done-card p-3 rounded-4 mb-3 text-start">
             <div class="d-flex align-items-center gap-3">
-              <img src="assets/img/demo-qr.png" alt="Entry QR Code" class="qr-img rounded-2">
+              <img id="done-qr" src="" alt="Entry QR Code" class="qr-img rounded-2">
               <div class="flex-grow-1">
                 <div class="fw-semibold" id="done-title">FlyDreamAir Premium Lounge</div>
                 <div class="text-muted small" id="done-datetime">Sunday, December 20<br>11:30 AM – 2:00 PM</div>
@@ -357,9 +357,9 @@ $__plan =
           </div>
 
           <!-- Stacked white action buttons -->
-          <button class="btn btn-block-white mb-2" id="btn-download-pass">
+          <a class="btn btn-block-white mb-2" id="btn-download-pass" href="#" download>
             <i class="fa-solid fa-download me-2"></i>Download
-          </button>
+          </a>
           <button class="btn btn-block-white mb-3" id="btn-share-pass">
             <i class="fa-solid fa-share-nodes me-2"></i>Share
           </button>

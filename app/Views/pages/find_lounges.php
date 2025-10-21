@@ -30,10 +30,8 @@ $amenSel   = $filters['amen'] ?? [];
   <!-- Search & filters bar -->
   <div class="card mb-3 lounge-filter">
     <div class="card-body">
-      <!-- NOTE: action to root + hidden r=find to satisfy Router -->
       <form id="loungeFilter" method="get" action="<?= base_href() ?>">
         <input type="hidden" name="r" value="find">
-
         <div class="d-flex align-items-center gap-3 flex-wrap">
           <div class="flex-grow-1 position-relative">
             <i class="fa-solid fa-magnifying-glass text-muted position-absolute" style="left:12px; top:10px;"></i>
@@ -46,8 +44,6 @@ $amenSel   = $filters['amen'] ?? [];
               data-autosubmit="debounce"
             >
           </div>
-
-          <!-- Countries dropdown -->
           <div style="min-width: 220px;">
             <select class="form-select form-select-sm country-select" name="country" data-autosubmit="instant">
               <option <?= $country==='' || $country==='All Countries' ? 'selected' : '' ?>>All Countries</option>
@@ -60,7 +56,7 @@ $amenSel   = $filters['amen'] ?? [];
           </div>
         </div>
 
-        <!-- Amenities checklist (icons removed) -->
+        <!-- Amenities -->
         <div class="row g-3 mt-3">
           <div class="col-12 small text-muted">Amenities</div>
           <div class="col-12 d-flex flex-wrap gap-4 small">
@@ -92,6 +88,12 @@ $amenSel   = $filters['amen'] ?? [];
       </div>
     <?php else: ?>
       <?php foreach ($lounges as $L): ?>
+        <?php
+          $cap  = (int)$L['capacity'];
+          $used = (int)($L['used_now'] ?? 0);
+          $cls  = $occClass($used, $cap);
+          $occText = "{$used}/{$cap}";
+        ?>
         <div class="col-lg-6">
           <div class="card lounge-card h-100">
             <div class="lounge-media">
@@ -121,15 +123,9 @@ $amenSel   = $filters['amen'] ?? [];
                   </div>
                 </div>
 
-                <?php
-                  // Occupancy placeholder (booking later). Show capacity as "0/capacity" for now.
-                  $used = 0;
-                  $cap  = (int)$L['capacity'];
-                  $cls  = $occClass($used, $cap);
-                ?>
                 <div class="small d-flex align-items-center gap-1 occupancy <?= $cls ?>">
                   <img src="assets/img/guest-icon.svg" class="inline-icon occ-icon" alt="">
-                  <span class="occ-text"><?= $used ?>/<?= $cap ?></span>
+                  <span class="occ-text"><?= $occText ?></span>
                 </div>
               </div>
 
@@ -156,7 +152,7 @@ $amenSel   = $filters['amen'] ?? [];
                   </div>
                 </div>
 
-                <!-- Booking later -->
+                <!-- Open modal -->
                 <a href="#"
                   class="btn btn-fda btn-fda-primary btn-fda-fit"
                   style="height:32px; padding:0 14px;"
@@ -164,7 +160,7 @@ $amenSel   = $filters['amen'] ?? [];
                   data-bs-target="#bookingModal"
                   data-lounge-id="<?= (int)$L['id'] ?>"
                   data-lounge-premium="<?= (int)$L['is_premium'] ?>"
-                  data-lounge-occ="<?= $used ?>/<?= $cap ?>"
+                  data-lounge-occ="<?= htmlspecialchars($occText) ?>"
                   data-lounge-title="<?= htmlspecialchars($L['name']) ?>"
                   data-lounge-airport="<?= htmlspecialchars($L['airport_name']) ?> (<?= htmlspecialchars($L['iata']) ?>)<?= $L['terminal'] ? ' – '.htmlspecialchars($L['terminal']) : '' ?>"
                   data-lounge-city="<?= htmlspecialchars(($L['city'] ?? '').($L['country'] ? ', '.$L['country'] : '')) ?>"

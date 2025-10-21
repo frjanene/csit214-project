@@ -3,19 +3,13 @@ require_once __DIR__ . '/Model.php';
 
 class Lounge extends Model
 {
-  /**
-   * Fetch all amenities (for the filter checklist)
-   * @return array [ ['id'=>..., 'code'=>..., 'label'=>...], ... ]
-   */
+  /** Amenities list for filter */
   public static function allAmenities(): array {
     $sql = "SELECT id, code, label FROM amenities ORDER BY label";
     return self::db()->query($sql)->fetchAll();
   }
 
-  /**
-   * Fetch distinct countries that actually have lounges (for the country dropdown)
-   * Uses denormalized lounges.city/country (seed should fill).
-   */
+  /** Distinct countries that have lounges */
   public static function countriesWithLounges(): array {
     $sql = "SELECT DISTINCT country FROM lounges WHERE country IS NOT NULL AND country <> '' ORDER BY country";
     $rows = self::db()->query($sql)->fetchAll();
@@ -23,16 +17,9 @@ class Lounge extends Model
   }
 
   /**
-   * Search lounges with optional filters.
-   * @param string|null $q          Free text (lounge name, airport, city, iata)
-   * @param string|null $country    Exact country name
-   * @param array $amenityCodes     Array of amenity codes (['WIFI','SHOWERS',...])
-   * @param int $limit
-   * @param int $offset
-   * @return array Each lounge row with:
-   *   - lounge fields (id,name,terminal,is_premium,open_time,close_time,capacity,price_usd,image_url,city,country)
-   *   - airport_name, iata
-   *   - amenities: array of ['code','label']
+   * Search lounges + live 'used_now' (current occupancy) + amenities
+   *
+   * used_now = confirmed bookings overlapping NOW() on today's date
    */
   public static function search(?string $q, ?string $country, array $amenityCodes = [], int $limit = 50, int $offset = 0): array
   {
@@ -40,12 +27,25 @@ class Lounge extends Model
     $params = [];
     $where  = [];
 
-    // Base join
+    // Base join (+ inline subquery for used_now)
     $sql = "
       SELECT
         l.id, l.name, l.terminal, l.is_premium, l.open_time, l.close_time,
         l.capacity, l.price_usd, l.image_url, l.city, l.country,
-        a.name AS airport_name, a.iata
+        a.name AS airport_name, a.iata,
+        (
+          SELECT COALESCE(SUM(
+            CASE
+              WHEN b.status = 'confirmed'
+               AND b.visit_date = CURDATE()
+               AND CONCAT(b.visit_date,' ',b.start_time) <= NOW()
+               AND CONCAT(b.visit_date,' ',b.end_time)   > NOW()
+              THEN b.people_count ELSE 0
+            END
+          ),0)
+          FROM bookings b
+          WHERE b.lounge_id = l.id
+        ) AS used_now
       FROM lounges l
       JOIN airports a ON a.id = l.airport_id
     ";
@@ -64,7 +64,6 @@ class Lounge extends Model
 
     // Amenities filter: must have ALL selected amenities
     if (!empty($amenityCodes)) {
-      // Join to filter, then GROUP BY/HAVING count = number selected
       $placeholders = [];
       foreach ($amenityCodes as $i => $code) {
         $ph = ":am{$i}";
@@ -86,7 +85,6 @@ class Lounge extends Model
         LIMIT :limit OFFSET :offset
       ";
     } else {
-      // No amenity filter — normal WHERE/ORDER/LIMIT
       if (!empty($where)) {
         $sql .= " WHERE " . implode(' AND ', $where);
       }
@@ -116,14 +114,15 @@ class Lounge extends Model
     ";
     $aStmt = $db->prepare($aSQL);
     $aStmt->execute($ids);
-    $amap = []; // lounge_id => [ ['code'=>...,'label'=>...], ... ]
+    $amap = []; // lounge_id => [ {code,label}, ... ]
     while ($r = $aStmt->fetch()) {
       $amap[$r['lounge_id']][] = ['code' => $r['code'], 'label' => $r['label']];
     }
 
-    // Attach amenities array
     foreach ($rows as &$r) {
-      $r['amenities'] = $amap[$r['id']] ?? [];
+      $r['used_now']   = (int)($r['used_now'] ?? 0);
+      $r['capacity']   = (int)($r['capacity'] ?? 0);
+      $r['amenities']  = $amap[$r['id']] ?? [];
     }
     return $rows;
   }

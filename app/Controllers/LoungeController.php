@@ -13,7 +13,7 @@ class LoungeController extends BaseController {
     $amenities = Lounge::allAmenities();
     $countries = Lounge::countriesWithLounges();
 
-    // Query lounges
+    // Query lounges (now includes used_now)
     $lounges = Lounge::search($q, $country, $amen, 50, 0);
 
     $this->render('find_lounges', 'Find Lounges', 'main', [

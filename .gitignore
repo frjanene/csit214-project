@@ -6,3 +6,6 @@ Thumbs.db
 .env
 vendor/
 storage/logs/*.log
+# Composer / PHP
+/vendor/
+/vendor/*

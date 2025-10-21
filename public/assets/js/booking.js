@@ -229,6 +229,7 @@
 
     // Apply flight-based constraints first, then update UI
     applyFlightTimeConstraints();
+    updateInlineOccChips();
     updateSelectedSlot();
   }
 
@@ -260,6 +261,55 @@
     return { occ, pct };
   };
 
+  // --- inline chips next to selects ---
+  function setInlineChip(el, occText, pct){
+    if (!el) return;
+    const numEl = el.querySelector('.occ-num') || el.querySelector('span');
+    el.classList.remove('occ-low','occ-mid','occ-high','d-none');
+
+    if (!occText || pct < 0) {
+      if (numEl) numEl.textContent = '—';
+      el.classList.add('d-none');
+      return;
+    }
+    if (numEl) numEl.textContent = occText;
+
+    const cls = (pct < 50) ? 'occ-low' : (pct <= 80 ? 'occ-mid' : 'occ-high');
+    el.classList.add(cls);
+  }
+
+  function updateInlineOccChips(){
+    const { occ: occStart, pct: pctStart } = getOccTextAndPct($('#bk-start'));
+    const { occ: occEnd,   pct: pctEnd   } = getOccTextAndPct($('#bk-end'));
+    setInlineChip($('#bk-start-occ-chip'), occStart, pctStart);
+    setInlineChip($('#bk-end-occ-chip'),   occEnd,   pctEnd);
+  }
+
+  function toggleSelectPadding(selectEl, chipEl){
+  if (!selectEl || !chipEl) return;
+  const visible = !chipEl.classList.contains('d-none');
+  selectEl.classList.toggle('with-chip', visible);
+}
+
+// updateInlineOccChips() — replace your body with this:
+function updateInlineOccChips(){
+  const startSel = $('#bk-start');
+  const endSel   = $('#bk-end');
+
+  const { occ: occStart, pct: pctStart } = getOccTextAndPct(startSel);
+  const { occ: occEnd,   pct: pctEnd   } = getOccTextAndPct(endSel);
+
+  const startChip = $('#bk-start-occ-chip');
+  const endChip   = $('#bk-end-occ-chip');
+
+  setInlineChip(startChip, occStart, pctStart);
+  setInlineChip(endChip,   occEnd,   pctEnd);
+
+  toggleSelectPadding(startSel, startChip);
+  toggleSelectPadding(endSel,   endChip);
+}
+
+
   function updateSelectedSlot(){
     const date = $('#bk-date').value;
     const st   = $('#bk-start').value;
@@ -279,24 +329,25 @@
         }
       }
       if (!fixed) {
-        // leave as-is; constraints will have already limited choices
         et = endSel.value;
       }
     }
 
     $('#bk-slot-text').textContent = (date && st && et) ? `${st} – ${et} on ${date}` : '—';
+
+    // refresh small chips next to selects
+    updateInlineOccChips();
+
+    // choose the higher percentage; if both invalid, show "—"
     {
       const { occ: occStart, pct: pctStart } = getOccTextAndPct($('#bk-start'));
       const { occ: occEnd,   pct: pctEnd   } = getOccTextAndPct($('#bk-end'));
-
-      // choose the higher percentage; if both invalid, show "—"
       let chosenOcc = '—';
       if (pctStart >= 0 || pctEnd >= 0) {
         if (pctEnd > pctStart) chosenOcc = occEnd || '—';
         else if (pctStart > pctEnd) chosenOcc = occStart || '—';
         else chosenOcc = (occEnd || occStart || '—'); // tie -> prefer end if available
       }
-
       $('#bk-slot-occ').textContent = chosenOcc;
     }
 
@@ -571,6 +622,7 @@
     // Load real slots + occupancy for this lounge & date
     await loadSlotsAndPopulate();
     applyFlightTimeConstraints();
+    updateInlineOccChips();
 
     if (isQuoteReady()) debouncedQuote();
     updateSelectedSlot();
@@ -589,6 +641,7 @@
     } else {
       await loadSlotsAndPopulate();
       applyFlightTimeConstraints();
+      updateInlineOccChips();
       if (isQuoteReady()) debouncedQuote();
       updateSelectedSlot();
     }
@@ -597,6 +650,7 @@
   // ---------- reactive updates ----------
   $('#bk-start').addEventListener('change', () => {
     applyFlightTimeConstraints();
+    updateInlineOccChips();
     updateSelectedSlot();
     if (isQuoteReady()) debouncedQuote();
   });
@@ -604,6 +658,7 @@
   ['bk-end','bk-guests'].forEach(id=>{
     $('#'+id).addEventListener('change', () => {
       applyFlightTimeConstraints();
+      updateInlineOccChips();
       updateSelectedSlot();
       if (isQuoteReady()) debouncedQuote();
     });

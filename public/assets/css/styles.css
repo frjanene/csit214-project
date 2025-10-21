@@ -536,3 +536,31 @@ h5{font-weight:500;font-size:18px;}
 .pref-save-btn{height:36px;font-weight:700;font-size:12px;padding:0 14px;}
 .pref-danger-note{border-color:#ECEFF4!important;}
 .pref-danger-btn{height:40px;font-weight:700;}
+
+
+/* wrapper lets us absolutely-position the chip “inside” the input */
+.input-chip-wrap { position: relative; }
+
+/* when a chip is showing, give the select extra right padding */
+.form-select.with-chip { padding-right: 7.5rem; } /* tweak to taste */
+
+/* the chip sits visually inside the select, aligned to the right */
+.occ-chip-inside {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;          /* don’t block clicks on the select */
+  white-space: nowrap;
+  height: 32px;                  /* match your chip height */
+  display: inline-flex;
+  align-items: center;
+  padding: 0 .6rem;
+  border-radius: 999px;          /* pill look */
+}
+
+/* optional: scale down on small screens */
+@media (max-width: 480px) {
+  .form-select.with-chip { padding-right: 6rem; }
+  .occ-chip-inside { font-size: .875rem; }
+}

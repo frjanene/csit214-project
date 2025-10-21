@@ -252,61 +252,84 @@ class Booking extends Model
     }
 
     public static function slotsForDate(int $loungeId, string $dateYmd): ?array
-    {
-        $pdo = self::db();
+{
+    $pdo = self::db();
 
-        $L = $pdo->prepare("SELECT id, capacity, open_time, close_time FROM lounges WHERE id = :id LIMIT 1");
-        $L->execute([':id' => $loungeId]);
-        $lou = $L->fetch();
-        if (!$lou) {
-            return null;
+    $L = $pdo->prepare("SELECT id, capacity, open_time, close_time FROM lounges WHERE id = :id LIMIT 1");
+    $L->execute([':id' => $loungeId]);
+    $lou = $L->fetch();
+    if (!$lou) return null;
+
+    // Count strictly on boundaries selected at booking time
+    $sql = "
+        SELECT
+            ls.label,
+            TIME_FORMAT(ls.start_time,'%H:%i') AS start_hhmm,
+            TIME_FORMAT(ls.end_time,  '%H:%i') AS end_hhmm,
+
+            -- count bookings whose START equals this slot's start
+            COALESCE(SUM(
+                CASE
+                    WHEN b.status = 'confirmed'
+                     AND b.visit_date = :d
+                     AND b.start_time = ls.start_time
+                    THEN b.people_count ELSE 0
+                END
+            ),0) AS used_start,
+
+            -- count bookings whose END equals this slot's end
+            COALESCE(SUM(
+                CASE
+                    WHEN b.status = 'confirmed'
+                     AND b.visit_date = :d
+                     AND b.end_time = ls.end_time
+                    THEN b.people_count ELSE 0
+                END
+            ),0) AS used_end
+
+        FROM lounge_slots ls
+        LEFT JOIN bookings b
+               ON b.lounge_id = ls.lounge_id
+              AND b.visit_date = :d
+        WHERE ls.lounge_id = :lid
+        GROUP BY ls.label, ls.start_time, ls.end_time
+        ORDER BY ls.start_time
+    ";
+
+    $st = $pdo->prepare($sql);
+    $st->execute([':lid' => $loungeId, ':d' => $dateYmd]);
+    $rows = $st->fetchAll() ?: [];
+
+    $cap = (int) $lou['capacity'];
+    $out = [];
+
+    foreach ($rows as $r) {
+        $usedStart = (int)$r['used_start'];
+        $usedEnd   = (int)$r['used_end'];
+        $used      = $usedStart + $usedEnd;
+
+        // ✅ Always apply the 50% visual padding when below 50% (even if used == 0)
+        if ($used < ($cap * 0.5)) {
+            $used += (int) round($cap * 0.5);
+            if ($used > $cap) $used = $cap;
         }
 
-        $sql = "
-            SELECT
-                ls.label,
-                TIME_FORMAT(ls.start_time,'%H:%i') AS start_hhmm,
-                TIME_FORMAT(ls.end_time,  '%H:%i') AS end_hhmm,
-                COALESCE(SUM(
-                    CASE
-                        WHEN b.status = 'confirmed'
-                         AND b.visit_date = :d
-                         AND b.start_time < ls.end_time
-                         AND b.end_time   > ls.start_time
-                        THEN b.people_count ELSE 0
-                    END
-                ),0) AS used
-              FROM lounge_slots ls
-              LEFT JOIN bookings b
-                     ON b.lounge_id = ls.lounge_id
-                    AND b.visit_date = :d
-             WHERE ls.lounge_id = :lid
-             GROUP BY ls.label, ls.start_time, ls.end_time
-             ORDER BY ls.start_time
-        ";
-        $st = $pdo->prepare($sql);
-        $st->execute([':lid' => $loungeId, ':d' => $dateYmd]);
-        $rows = $st->fetchAll() ?: [];
-
-        $cap = (int) $lou['capacity'];
-        $out = [];
-        foreach ($rows as $r) {
-            $used = (int) $r['used'];
-            $out[] = [
-                'label' => $r['label'],
-                'start' => $r['start_hhmm'],
-                'end'   => $r['end_hhmm'],
-                'used'  => $used,
-                'cap'   => $cap,
-                'text'  => "{$used}/{$cap}",
-            ];
-        }
-
-        return [
-            'open_time'  => $lou['open_time'],
-            'close_time' => $lou['close_time'],
-            'capacity'   => $cap,
-            'rows'       => $out,
+        $out[] = [
+            'label' => $r['label'],
+            'start' => $r['start_hhmm'],
+            'end'   => $r['end_hhmm'],
+            'used'  => $used,
+            'cap'   => $cap,
+            'text'  => "{$used}/{$cap}",
         ];
     }
+
+    return [
+        'open_time'  => $lou['open_time'],
+        'close_time' => $lou['close_time'],
+        'capacity'   => $cap,
+        'rows'       => $out,
+    ];
+}
+
 }

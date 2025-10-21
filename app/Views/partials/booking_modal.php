@@ -161,17 +161,27 @@ $__plan =
             <div class="row g-2 mb-3">
               <div class="col-6">
                 <label class="small fw-semibold mb-1">Start Time</label>
-                <div class="d-flex align-items-center gap-2">
+                <div class="input-chip-wrap d-flex align-items-center gap-2">
                   <select class="form-select" id="bk-start"></select>
+                  <span class="chip chip-occ occ-chip-inside d-none" id="bk-start-occ-chip">
+                    <img src="assets/img/guest-icon.svg" class="inline-icon me-1" alt="">
+                    <span class="occ-num" id="bk-start-occ">—</span>
+                  </span>
                 </div>
               </div>
+
               <div class="col-6">
                 <label class="small fw-semibold mb-1">End Time</label>
-                <div class="d-flex align-items-center gap-2">
+                <div class="input-chip-wrap d-flex align-items-center gap-2">
                   <select class="form-select" id="bk-end"></select>
+                  <span class="chip chip-occ occ-chip-inside d-none" id="bk-end-occ-chip">
+                    <img src="assets/img/guest-icon.svg" class="inline-icon me-1" alt="">
+                    <span class="occ-num" id="bk-end-occ">—</span>
+                  </span>
                 </div>
               </div>
             </div>
+
 
             <div class="occ-guide p-3 rounded-4 mb-3">
               <div class="d-flex align-items-center gap-2 mb-2">

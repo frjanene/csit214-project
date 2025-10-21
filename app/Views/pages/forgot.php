@@ -25,7 +25,10 @@
       <span>Account Recovery</span>
     </p>
 
-    <form action="<?= base_href('forgot_done') ?>" method="get">
+    <!-- IMPORTANT: route via ?r=forgot_done so Router sees it -->
+    <form action="?" method="get">
+      <input type="hidden" name="r" value="forgot_done">
+
       <div class="mb-3">
         <label class="form-label small fw-semibold d-flex align-items-center gap-2">
           <img src="assets/img/email-icon.svg" width="16" height="16" alt=""><span>Email Address</span>

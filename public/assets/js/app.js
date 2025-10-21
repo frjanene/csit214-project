@@ -150,17 +150,19 @@ document.addEventListener('click', (e) => {
     }
   }
 
-  // QR (if data-bd-qr present)
-  const qrAttr = link.getAttribute('data-bd-qr');
+  // QR — always show the local image asset; if a URL is provided, make it clickable
+  const qrUrl  = link.getAttribute('data-bd-qr'); // optional deeplink or server URL
   const qrImgEl = modal.querySelector('.bd-section img[alt="QR"]');
   if (qrImgEl) {
-    if (qrAttr) {
-      qrImgEl.src = qrAttr;
-      qrImgEl.classList.remove('d-none');
+    qrImgEl.src = 'assets/img/demo-qr.png';           // always display the image
+    qrImgEl.classList.remove('d-none');
+    qrImgEl.alt = 'Entry QR Code';
+    if (qrUrl) {
+      qrImgEl.style.cursor = 'pointer';
+      qrImgEl.onclick = () => window.open(qrUrl, '_blank');
     } else {
-      // hide if not provided
-      qrImgEl.classList.add('d-none');
-      qrImgEl.removeAttribute('src');
+      qrImgEl.onclick = null;
+      qrImgEl.style.cursor = 'default';
     }
   }
 

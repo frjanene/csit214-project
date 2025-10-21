@@ -14,6 +14,34 @@ $filters   = $filters   ?? ['q'=>'','country'=>'','amen'=>[]];
 $q         = $filters['q'] ?? '';
 $country   = $filters['country'] ?? '';
 $amenSel   = $filters['amen'] ?? [];
+
+/**
+ * Half-hour bucket for deterministic "randomization".
+ * Changes every 30 minutes.
+ */
+$__halfHourBucket = (int) floor(time() / 1800);
+
+/**
+ * Pseudo-random fallback occupancy when live used_now is 0.
+ * - Deterministic per (lounge_id, date, half-hour bucket)
+ * - Between ~30% and 90% of capacity (and never 0 if cap > 0)
+ * - Never exceeds capacity
+ */
+$__fallbackUsed = function (int $loungeId, int $cap) use ($__halfHourBucket): int {
+  if ($cap <= 0) return 0;
+
+  $seed = $loungeId . '|' . date('Y-m-d') . '|' . $__halfHourBucket;
+  // crc32 is fast and stable; mod map to a band
+  $hash = crc32($seed);
+
+  $min = (int) max(1, floor($cap * 0.30));  // ~30% min, at least 1
+  $max = (int) max($min, floor($cap * 0.90)); // up to ~90%, never below min
+
+  $range = max(1, $max - $min + 1);
+  $val   = $min + ($hash % $range);
+
+  return min($cap, $val);
+};
 ?>
 
 <?php $current = $current ?? ($current_plan ?? null); ?>
@@ -89,8 +117,16 @@ $amenSel   = $filters['amen'] ?? [];
     <?php else: ?>
       <?php foreach ($lounges as $L): ?>
         <?php
-          $cap  = (int)$L['capacity'];
-          $used = (int)($L['used_now'] ?? 0);
+          $cap  = (int)($L['capacity'] ?? 0);
+          $usedLive = (int)($L['used_now'] ?? 0);
+
+          // If live occupancy is zero (e.g., no overlapping bookings right now),
+          // show a realistic fallback that changes every 30 minutes.
+          $used = ($usedLive > 0) ? $usedLive : $__fallbackUsed((int)$L['id'], $cap);
+
+          // Make sure we never exceed capacity
+          $used = min(max(0, $used), $cap);
+
           $cls  = $occClass($used, $cap);
           $occText = "{$used}/{$cap}";
         ?>

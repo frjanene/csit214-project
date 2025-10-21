@@ -255,4 +255,78 @@ class Booking extends Model {
   }
   
 
+    /**
+   * Return all lounge_slots for a lounge on a given date with occupancy.
+   * Output:
+   *   [
+   *     'open_time'  => 'HH:MM:SS',
+   *     'close_time' => 'HH:MM:SS',
+   *     'capacity'   => int,
+   *     'rows'       => [
+   *        ['label'=>'11:00','start'=>'11:00','end'=>'11:30','used'=>42,'cap'=>120,'text'=>'42/120'],
+   *        ...
+   *     ]
+   *   ]
+   * Returns null if lounge not found.
+   */
+  public static function slotsForDate(int $loungeId, string $dateYmd): ?array {
+    $pdo = self::db();
+
+    // Get base lounge info (capacity/open/close) and verify lounge exists.
+    $L = $pdo->prepare("SELECT id, capacity, open_time, close_time FROM lounges WHERE id = :id LIMIT 1");
+    $L->execute([':id'=>$loungeId]);
+    $lou = $L->fetch();
+    if (!$lou) return null;
+
+    // Join preseeded lounge_slots to confirmed bookings that overlap the slot.
+    // Overlap test: booking.start < slot.end AND booking.end > slot.start
+    $sql = "
+      SELECT
+        ls.label,
+        TIME_FORMAT(ls.start_time,'%H:%i') AS start_hhmm,
+        TIME_FORMAT(ls.end_time,  '%H:%i') AS end_hhmm,
+        COALESCE(SUM(
+          CASE
+            WHEN b.status = 'confirmed'
+             AND b.visit_date = :d
+             AND b.start_time < ls.end_time
+             AND b.end_time   > ls.start_time
+            THEN b.people_count ELSE 0
+          END
+        ),0) AS used
+      FROM lounge_slots ls
+      LEFT JOIN bookings b
+        ON b.lounge_id = ls.lounge_id
+       AND b.visit_date = :d
+      WHERE ls.lounge_id = :lid
+      GROUP BY ls.label, ls.start_time, ls.end_time
+      ORDER BY ls.start_time
+    ";
+
+    $st = $pdo->prepare($sql);
+    $st->execute([':lid'=>$loungeId, ':d'=>$dateYmd]);
+    $rows = $st->fetchAll() ?: [];
+
+    $cap = (int)$lou['capacity'];
+    $out = [];
+    foreach ($rows as $r) {
+      $used = (int)$r['used'];
+      $out[] = [
+        'label' => $r['label'],
+        'start' => $r['start_hhmm'],
+        'end'   => $r['end_hhmm'],
+        'used'  => $used,
+        'cap'   => $cap,
+        'text'  => "{$used}/{$cap}",
+      ];
+    }
+
+    return [
+      'open_time'  => $lou['open_time'],
+      'close_time' => $lou['close_time'],
+      'capacity'   => $cap,
+      'rows'       => $out,
+    ];
+  }
+
 }

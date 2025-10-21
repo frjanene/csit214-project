@@ -110,26 +110,76 @@
     }
   }
 
-  // ---------- time options + summary ----------
-  function populateTimes(map){
+  // ---------- END-TIME FILTER (hide < start) ----------
+  function filterEndOptions(){
+    const st = $('#bk-start').value;
+    const endSel = $('#bk-end');
+    if (!st || !endSel) return;
+
+    const minStart = hhmmToMinutes(st);
+    let firstValid = null;
+
+    [...endSel.options].forEach(opt => {
+      const valid = hhmmToMinutes(opt.value) >= minStart;
+      opt.hidden = !valid;         // don't display
+      opt.disabled = !valid;       // also make it unselectable
+      if (valid && firstValid === null) firstValid = opt.value;
+    });
+
+    // If current end is now invalid, snap to the first valid end
+    if (!endSel.value || hhmmToMinutes(endSel.value) < minStart) {
+      endSel.value = firstValid || '';
+    }
+  }
+
+  // ---------- time options + summary (DB-driven) ----------
+  function populateTimesFromArray(arr){
     const startSel = $('#bk-start');
     const endSel   = $('#bk-end');
     startSel.innerHTML = '';
     endSel.innerHTML   = '';
 
-    Object.entries(map).forEach(([t, occ]) => {
-      const add = (sel) => {
+    arr.forEach(s => {
+      // expecting: {start:'HH:MM', end:'HH:MM', used:int, cap:int}
+      const occText = `${s.used}/${s.cap}`;
+      const add = (sel, timeValue, occ) => {
         const o = document.createElement('option');
-        o.value = t;
-        o.textContent = `${t} — ${occ}`;
+        o.value = timeValue;
+        o.textContent = `${timeValue} — ${occ}`;
+        if (s.used >= s.cap) o.disabled = true; // mark full slots unselectable
         sel.appendChild(o);
       };
-      add(startSel); add(endSel);
+      add(startSel, s.start, occText);
+      add(endSel,   s.end,   occText);
     });
 
-    if (startSel.options.length) startSel.selectedIndex = Math.min(1, startSel.options.length-1);
-    if (endSel.options.length)   endSel.selectedIndex   = Math.min(3, endSel.options.length-1);
+    if (startSel.options.length) startSel.selectedIndex = 0;
+    if (endSel.options.length)   endSel.selectedIndex   = Math.min(1, endSel.options.length-1);
+
+    // NEW: filter end options based on the initial start selection
+    filterEndOptions();
+
     updateSelectedSlot();
+  }
+
+  async function loadSlotsAndPopulate() {
+    const date = $('#bk-date').value;
+    if (!selected.loungeId || !date) return;
+
+    const res = await postForm('?r=slots', {
+      lounge_id: String(selected.loungeId),
+      date
+    });
+
+    if (!res || !res.ok) {
+      // clear selects on failure
+      $('#bk-start').innerHTML = '';
+      $('#bk-end').innerHTML   = '';
+      updateSelectedSlot();
+      return;
+    }
+
+    populateTimesFromArray(res.slots || []);
   }
 
   const selectedOccText = (sel) => {
@@ -141,7 +191,27 @@
   function updateSelectedSlot(){
     const date = $('#bk-date').value;
     const st   = $('#bk-start').value;
-    const et   = $('#bk-end').value;
+    let   et   = $('#bk-end').value; // ← make mutable
+
+    // Enforce: end time can’t be earlier than start time
+    if (st && et && hhmmToMinutes(et) < hhmmToMinutes(st)) {
+      const endSel = $('#bk-end');
+      let fixed = false;
+      for (const opt of endSel.options) {
+        if (opt.disabled) continue;
+        if (hhmmToMinutes(opt.value) >= hhmmToMinutes(st)) {
+          endSel.value = opt.value;
+          et = opt.value;
+          fixed = true;
+          break;
+        }
+      }
+      // If no valid option ≥ start exists, snap end to start
+      if (!fixed) {
+        endSel.value = st;
+        et = st;
+      }
+    }
 
     $('#bk-slot-text').textContent = (date && st && et) ? `${st} – ${et} on ${date}` : '—';
     $('#bk-slot-occ').textContent  = selectedOccText($('#bk-end')) || selectedOccText($('#bk-start')) || '—';
@@ -402,10 +472,8 @@
     $('#bk-after-flight').classList.remove('d-none');
     statusEl.textContent = `Departing from ${res.dep.airport_name} (${res.dep.airport_iata})`;
 
-    populateTimes({
-      '11:00':'88/120','11:30':'90/120','12:00':'94/120',
-      '12:30':'98/120','13:00':'105/120','13:30':'110/120','14:00':'89/120'
-    });
+    // Load real slots + occupancy for this lounge & date
+    await loadSlotsAndPopulate();
 
     // Once times are populated, try the first quote immediately if other fields ready
     if (isQuoteReady()) debouncedQuote();
@@ -419,13 +487,27 @@
     if (e.key === 'Enter') { e.preventDefault(); doFlightLookup(); }
   });
 
-  $('#bk-date').addEventListener('change', () => {
-    if (($('#bk-flight').value || '').trim()) doFlightLookup();
-    else if (isQuoteReady()) debouncedQuote();
+  $('#bk-date').addEventListener('change', async () => {
+    // If a flight has been entered, re-run flight lookup (it may change the date)
+    if (($('#bk-flight').value || '').trim()) {
+      await doFlightLookup();
+    } else {
+      // Otherwise just load slots for the picked date
+      await loadSlotsAndPopulate();
+      if (isQuoteReady()) debouncedQuote();
+      updateSelectedSlot();
+    }
   });
 
   // ---------- reactive updates ----------
-  ['bk-start','bk-end','bk-guests'].forEach(id=>{
+  // Start: filter end options first, then update + quote
+  $('#bk-start').addEventListener('change', () => {
+    filterEndOptions();           // hide earlier-than-start end times
+    updateSelectedSlot();
+    if (isQuoteReady()) debouncedQuote();
+  });
+
+  ['bk-end','bk-guests'].forEach(id=>{
     $('#'+id).addEventListener('change', () => {
       updateSelectedSlot();
       if (isQuoteReady()) debouncedQuote();
@@ -475,23 +557,26 @@
     const amtEl = document.getElementById('done-amount');
     amtEl && (amtEl.textContent = (res.booking.total > 0) ? `$${Number(res.booking.total).toFixed(0)} Paid` : '$0.00');
 
-    // QR image & actions
+    // QR image & actions — always show the image asset (ignore server for src)
     const qrImgEl = modalEl.querySelector('.qr-img');
     if (qrImgEl) {
-      const qrImgUrl = res.booking.qr_img || '';
-      qrImgEl.src = qrImgUrl || 'assets/img/demo-qr.png';
+      qrImgEl.src = 'assets/img/demo-qr.png';
       qrImgEl.alt = 'Entry QR Code';
+      // optional: still allow clicking to open server deeplink if available
       if (res.booking.qr_url) {
         qrImgEl.style.cursor = 'pointer';
         qrImgEl.onclick = () => window.open(res.booking.qr_url, '_blank');
+      } else {
+        qrImgEl.onclick = null;
+        qrImgEl.style.cursor = 'default';
       }
     }
 
     const dlBtn = document.getElementById('btn-download-pass');
     if (dlBtn) {
       dlBtn.onclick = () => {
-        const href = res.booking.qr_img || res.booking.qr_url;
-        if (!href) return;
+        // keep download using local image (since we’re always displaying the asset)
+        const href = 'assets/img/demo-qr.png';
         const a = document.createElement('a');
         a.href = href;
         a.download = `FlyDreamAir-QR-${res.booking.id}.png`;
@@ -504,7 +589,7 @@
     const shBtn = document.getElementById('btn-share-pass');
     if (shBtn) {
       shBtn.onclick = async () => {
-        const shareUrl = res.booking.qr_url || res.booking.qr_img || location.href;
+        const shareUrl = res.booking.qr_url || location.href;
         const shareText = `Your lounge pass for ${res.booking.title} on ${res.booking.date} (${res.booking.start}–${res.booking.end}).`;
         if (navigator.share) {
           try { await navigator.share({ title: 'FlyDreamAir Lounge Pass', text: shareText, url: shareUrl }); } catch(_) {}

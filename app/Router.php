@@ -22,6 +22,7 @@ $routes = [
   'booking_cancel'  => 'BookingController@cancel',
   'qr'              => 'BookingController@qr',     
   'qr_img'              => 'BookingController@qrImg', 
+  'slots'           => 'BookingController@slots',
   'memberships' => 'MembershipController@index',
   'membership_upgrade' => 'MembershipController@upgrade',
   'profile'     => 'ProfileController@index',

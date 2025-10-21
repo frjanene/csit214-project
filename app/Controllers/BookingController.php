@@ -248,4 +248,33 @@ class BookingController extends BaseController {
       echo json_encode(['ok'=>false,'error'=>$e->getMessage()]);
     }
   }
+
+    /**
+     * POST /?r=slots  { lounge_id:int, date:'YYYY-MM-DD' }
+     * Returns all slots for the lounge on that date with occupancy (used/capacity).
+     */
+    public function slots() {
+      header('Content-Type: application/json');
+
+      $lid  = (int)($_POST['lounge_id'] ?? 0);
+      $date = trim($_POST['date'] ?? '');
+
+      if ($lid <= 0 || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+        echo json_encode(['ok'=>false, 'error'=>'Invalid lounge or date']); return;
+      }
+
+      $slots = Booking::slotsForDate($lid, $date);
+      if ($slots === null) {
+        echo json_encode(['ok'=>false, 'error'=>'Lounge not found']); return;
+      }
+
+      echo json_encode([
+        'ok'    => true,
+        'slots' => $slots['rows'],        // array of {label,start,end,used,cap,text}
+        'open'  => $slots['open_time'],   // 'HH:MM:SS'
+        'close' => $slots['close_time'],  // 'HH:MM:SS'
+        'cap'   => $slots['capacity'],    // integer capacity
+      ]);
+    }
+
 }

@@ -260,33 +260,22 @@ class Booking extends Model
     $lou = $L->fetch();
     if (!$lou) return null;
 
-    // Count strictly on boundaries selected at booking time
+    // Sum PEOPLE across bookings that touch the slot boundary (start==slot.start OR end==slot.end)
     $sql = "
         SELECT
             ls.label,
-            TIME_FORMAT(ls.start_time,'%H:%i') AS start_hhmm,
-            TIME_FORMAT(ls.end_time,  '%H:%i') AS end_hhmm,
+            TIME_FORMAT(ls.start_time, '%H:%i') AS start_hhmm,
+            TIME_FORMAT(ls.end_time,   '%H:%i') AS end_hhmm,
 
-            -- count bookings whose START equals this slot's start
             COALESCE(SUM(
                 CASE
                     WHEN b.status = 'confirmed'
                      AND b.visit_date = :d
-                     AND b.start_time = ls.start_time
-                    THEN b.people_count ELSE 0
+                     AND (b.start_time = ls.start_time OR b.end_time = ls.end_time)
+                    THEN b.people_count
+                    ELSE 0
                 END
-            ),0) AS used_start,
-
-            -- count bookings whose END equals this slot's end
-            COALESCE(SUM(
-                CASE
-                    WHEN b.status = 'confirmed'
-                     AND b.visit_date = :d
-                     AND b.end_time = ls.end_time
-                    THEN b.people_count ELSE 0
-                END
-            ),0) AS used_end
-
+            ), 0) AS used
         FROM lounge_slots ls
         LEFT JOIN bookings b
                ON b.lounge_id = ls.lounge_id
@@ -304,11 +293,9 @@ class Booking extends Model
     $out = [];
 
     foreach ($rows as $r) {
-        $usedStart = (int)$r['used_start'];
-        $usedEnd   = (int)$r['used_end'];
-        $used      = $usedStart + $usedEnd;
+        $used = (int) $r['used'];
 
-        // ✅ Always apply the 50% visual padding when below 50% (even if used == 0)
+        // Always apply your 50% visual padding when below 50% (even if used == 0)
         if ($used < ($cap * 0.5)) {
             $used += (int) round($cap * 0.5);
             if ($used > $cap) $used = $cap;

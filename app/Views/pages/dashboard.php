@@ -11,7 +11,7 @@
   $plan = $plan ?? ['slug'=>'basic','name'=>'Basic','guest_allowance'=>0,'normal_access'=>'pay_per_use','premium_access'=>'pay_per_use'];
   $planName  = $plan['name'] ?? 'Basic';
   $guestAllow= (int)($plan['guest_allowance'] ?? 0);
-  $guestText = $guestAllow > 0 ? ("{$guestAllow} per visit") : 'Pay-per-use';
+  $guestText = $guestAllow > 0 ? ("{$guestAllow} per visit") : '0 per visit';
 
   // Member ID: clearer label for guests
   $memberId  = $isGuest ? 'GUEST' : ('U'.str_pad((string)($u['id'] ?? 0), 6, '0', STR_PAD_LEFT));

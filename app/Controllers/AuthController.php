@@ -3,7 +3,6 @@ require_once __DIR__ . '/../Models/User.php';
 
 class AuthController extends BaseController {
   public function index() {
-    // Kept for compatibility; not used since auth lives in welcome modal.
     $this->render('auth', 'Auth', 'bare');
   }
 

@@ -11,270 +11,299 @@ use Endroid\QrCode\ErrorCorrectionLevel;
 use Endroid\QrCode\RoundBlockSizeMode;
 use Endroid\QrCode\Color\Color;
 
-class BookingController extends BaseController {
-  public function index() {
-  if (!is_logged_in()) {
-    header('Location: ?r=signin'); exit;
-  }
-  $uid = (int)current_user()['id'];
+class BookingController extends BaseController
+{
+    public function index()
+    {
+        if (!is_logged_in()) {
+            header('Location: ?r=signin');
+            exit;
+        }
 
-  $rows = Booking::listUserBookings($uid);
+        $uid  = (int) current_user()['id'];
+        $rows = Booking::listUserBookings($uid);
 
-  $now = new DateTimeImmutable();
+        $now = new DateTimeImmutable();
+        $upcoming = [];
+        $past = [];
 
-  $upcoming = [];
-  $past     = [];
+        foreach ($rows as $r) {
+            $endDt = DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $r['visit_date'] . ' ' . $r['end_time']);
+            if (!$endDt) {
+                $past[] = $r;
+                continue;
+            }
+            if ($endDt >= $now && strtolower($r['status']) !== 'cancelled') {
+                $upcoming[] = $r;
+            } else {
+                $past[] = $r;
+            }
+        }
 
-  foreach ($rows as $r) {
-    $endDt = DateTimeImmutable::createFromFormat(
-      'Y-m-d H:i:s',
-      $r['visit_date'].' '.$r['end_time']
-    );
-    if (!$endDt) { $past[] = $r; continue; }
-    if ($endDt >= $now && strtolower($r['status']) !== 'cancelled') {
-      $upcoming[] = $r;
-    } else {
-      $past[] = $r;
-    }
-  }
+        $data = [
+            'upcoming'       => $upcoming,
+            'past'           => $past,
+            'count_upcoming' => count($upcoming),
+            'count_past'     => count($past),
+        ];
 
-  $data = [
-    'upcoming'       => $upcoming,
-    'past'           => $past,
-    'count_upcoming' => count($upcoming),
-    'count_past'     => count($past),
-  ];
-
-  // NOTE: pass layout ('main') before $data
-  $this->render('bookings', 'My Bookings', 'main', $data);
-}
-
-
-  /** POST /?r=booking_cancel  {id: <booking_id>} */
-  public function cancel() {
-    header('Content-Type: application/json');
-    if (!is_logged_in()) { echo json_encode(['ok'=>false,'error'=>'Sign in required']); return; }
-
-    $uid = (int)current_user()['id'];
-    $id  = (int)($_POST['id'] ?? 0);
-    if ($id <= 0) { echo json_encode(['ok'=>false,'error'=>'Invalid booking id']); return; }
-
-    $ok = Booking::cancelBooking($id, $uid);
-    echo json_encode(['ok'=>$ok, 'status'=>$ok?'cancelled':null]);
-  }
-
-  /** GET /?r=qr&code=... -> demo landing (deeplink encoded in QR) */
-  public function qr() {
-    header('Location: https://www.google.com', true, 302);
-    exit;
-  }
-
-  /**
-   * GET /?r=qr_img&code=...&s=240
-   * Same-origin PNG QR generated with endroid/qr-code v5.
-   */
-  public function qrImg() {
-    $code = trim($_GET['code'] ?? '');
-    $size = max(120, min(1024, (int)($_GET['s'] ?? 300)));
-
-    $deeplink = base_href('qr') . '&code=' . urlencode($code ?: 'demo');
-
-    $qr = QrCode::create($deeplink)
-      ->setEncoding(new Encoding('UTF-8'))
-      ->setErrorCorrectionLevel(ErrorCorrectionLevel::Low)
-      ->setSize($size)
-      ->setMargin(12)
-      ->setRoundBlockSizeMode(RoundBlockSizeMode::Margin)
-      ->setForegroundColor(new Color(0, 0, 0))
-      ->setBackgroundColor(new Color(255, 255, 255));
-
-    $writer = new PngWriter();
-    $png = $writer->write($qr)->getString();
-
-    header('Content-Type: image/png');
-    header('Cache-Control: public, max-age=3600, immutable');
-    header('Content-Disposition: inline; filename="booking-qr-' . ($code ?: 'demo') . '.png"');
-    echo $png;
-    exit;
-  }
-
-  /** POST /?r=flight_lookup  {flight: 'FD123', date:'YYYY-MM-DD'} */
-  public function flightLookup() {
-    header('Content-Type: application/json');
-
-    $flight = strtoupper(trim($_POST['flight'] ?? ''));
-    $date   = trim($_POST['date'] ?? '');
-
-    if (!preg_match('/^[A-Z]{2,3}\d{1,4}$/', $flight)) {
-      echo json_encode(['ok'=>false, 'error'=>'Invalid flight format (e.g., FD123).']);
-      return;
+        $this->render('bookings', 'My Bookings', 'main', $data);
     }
 
-    preg_match('/^([A-Z]{2,3})(\d{1,4})$/', $flight, $m);
-    [$all, $ac, $fn] = $m;
+    public function cancel()
+    {
+        header('Content-Type: application/json');
 
-    if ($date !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
-      $row = Booking::findFlight($ac, $fn, $date);
-    } else {
-      $row = Booking::findNearestFlight($ac, $fn);
+        if (!is_logged_in()) {
+            echo json_encode(['ok' => false, 'error' => 'Sign in required']);
+            return;
+        }
+
+        $uid = (int) current_user()['id'];
+        $id  = (int) ($_POST['id'] ?? 0);
+
+        if ($id <= 0) {
+            echo json_encode(['ok' => false, 'error' => 'Invalid booking id']);
+            return;
+        }
+
+        $ok = Booking::cancelBooking($id, $uid);
+        echo json_encode(['ok' => $ok, 'status' => $ok ? 'cancelled' : null]);
     }
 
-    if (!$row) {
-      echo json_encode(['ok'=>false, 'error'=>'Flight not found.']);
-      return;
+    public function qr()
+    {
+        header('Location: https://www.google.com', true, 302);
+        exit;
     }
 
-    $payload = [
-      'ok'          => true,
-      'airline'     => $ac,
-      'number'      => $fn,
-      'equipment'   => $row['equipment'],
-      'status'      => $row['status'],
-      'flight_date' => $row['flight_date'],
-      'dep'         => [
-        'airport_iata' => $row['dep_iata'],
-        'airport_name' => $row['dep_name'],
-        'terminal'     => $row['dep_terminal'],
-        'gate'         => $row['dep_gate'],
-        'sched'        => $row['sched_dep'],
-      ],
-      'arr'         => [
-        'airport_iata' => $row['arr_iata'],
-        'airport_name' => $row['arr_name'],
-        'terminal'     => $row['arr_terminal'],
-        'gate'         => $row['arr_gate'],
-        'sched'        => $row['sched_arr'],
-      ],
-    ];
-    echo json_encode($payload);
-  }
+    public function qrImg()
+    {
+        $code = trim($_GET['code'] ?? '');
+        $size = max(120, min(1024, (int) ($_GET['s'] ?? 300)));
 
-  /** POST /?r=booking_quote */
-  public function quote() {
-    header('Content-Type: application/json');
-    if (!is_logged_in()) { echo json_encode(['ok'=>false,'error'=>'Sign in required']); return; }
+        $deeplink = base_href('qr') . '&code=' . urlencode($code ?: 'demo');
 
-    $uid   = (int)current_user()['id'];
-    $lid   = (int)($_POST['lounge_id'] ?? 0);
-    $date  = trim($_POST['visit_date'] ?? '');
-    $start = trim($_POST['start_time'] ?? '');
-    $end   = trim($_POST['end_time'] ?? '');
-    $ppl   = max(1, (int)($_POST['people'] ?? 1));
+        $qr = QrCode::create($deeplink)
+            ->setEncoding(new Encoding('UTF-8'))
+            ->setErrorCorrectionLevel(ErrorCorrectionLevel::Low)
+            ->setSize($size)
+            ->setMargin(12)
+            ->setRoundBlockSizeMode(RoundBlockSizeMode::Margin)
+            ->setForegroundColor(new Color(0, 0, 0))
+            ->setBackgroundColor(new Color(255, 255, 255));
 
-    if (!$lid || !preg_match('/^\d{4}-\d{2}-\d{2}$/',$date) || !preg_match('/^\d{2}:\d{2}$/',$start) || !preg_match('/^\d{2}:\d{2}$/',$end)) {
-      echo json_encode(['ok'=>false,'error'=>'Missing/invalid fields']); return;
+        $writer = new PngWriter();
+        $png = $writer->write($qr)->getString();
+
+        header('Content-Type: image/png');
+        header('Cache-Control: public, max-age=3600, immutable');
+        header('Content-Disposition: inline; filename="booking-qr-' . ($code ?: 'demo') . '.png"');
+        echo $png;
+        exit;
     }
 
-    $lounge = Booking::loungeById($lid);
-    if (!$lounge) { echo json_encode(['ok'=>false,'error'=>'Lounge not found']); return; }
+    public function flightLookup()
+    {
+        header('Content-Type: application/json');
 
-    $q = Booking::quotePrice($uid, $lounge, $ppl);
-    echo json_encode([
-      'ok'            => true,
-      'method'        => $q['method'],
-      'unit'          => $q['unit'],
-      'total'         => $q['total'],
-      'plan'          => $q['plan'],
-      'needs_payment' => $q['total'] > 0,
-    ]);
-  }
+        $flight = strtoupper(trim($_POST['flight'] ?? ''));
+        $date   = trim($_POST['date'] ?? '');
 
-  /** POST /?r=booking_store  (creates booking; payment assumed demo-paid if needed) */
-  public function store() {
-    header('Content-Type: application/json');
-    if (!is_logged_in()) { echo json_encode(['ok'=>false,'error'=>'Sign in required']); return; }
+        if (!preg_match('/^[A-Z]{2,3}\d{1,4}$/', $flight)) {
+            echo json_encode(['ok' => false, 'error' => 'Invalid flight format (e.g., FD123).']);
+            return;
+        }
 
-    $uid   = (int)current_user()['id'];
-    $user  = current_user();
-    $lid   = (int)($_POST['lounge_id'] ?? 0);
-    $date  = trim($_POST['visit_date'] ?? '');
-    $start = trim($_POST['start_time'] ?? '');
-    $end   = trim($_POST['end_time'] ?? '');
-    $ppl   = max(1, (int)($_POST['people'] ?? 1));
-    $flight= strtoupper(trim($_POST['flight'] ?? ''));
+        preg_match('/^([A-Z]{2,3})(\d{1,4})$/', $flight, $m);
+        [$all, $ac, $fn] = $m;
 
-    if (!$lid || !preg_match('/^\d{4}-\d{2}-\d{2}$/',$date) || !preg_match('/^\d{2}:\d{2}$/',$start) || !preg_match('/^\d{2}:\d{2}$/',$end)) {
-      echo json_encode(['ok'=>false,'error'=>'Missing/invalid fields']); return;
+        if ($date !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+            $row = Booking::findFlight($ac, $fn, $date);
+        } else {
+            $row = Booking::findNearestFlight($ac, $fn);
+        }
+
+        if (!$row) {
+            echo json_encode(['ok' => false, 'error' => 'Flight not found.']);
+            return;
+        }
+
+        echo json_encode([
+            'ok'          => true,
+            'airline'     => $ac,
+            'number'      => $fn,
+            'equipment'   => $row['equipment'],
+            'status'      => $row['status'],
+            'flight_date' => $row['flight_date'],
+            'dep'         => [
+                'airport_iata' => $row['dep_iata'],
+                'airport_name' => $row['dep_name'],
+                'terminal'     => $row['dep_terminal'],
+                'gate'         => $row['dep_gate'],
+                'sched'        => $row['sched_dep'],
+            ],
+            'arr'         => [
+                'airport_iata' => $row['arr_iata'],
+                'airport_name' => $row['arr_name'],
+                'terminal'     => $row['arr_terminal'],
+                'gate'         => $row['arr_gate'],
+                'sched'        => $row['sched_arr'],
+            ],
+        ]);
     }
 
-    $lounge = Booking::loungeById($lid);
-    if (!$lounge) { echo json_encode(['ok'=>false,'error'=>'Lounge not found']); return; }
+    public function quote()
+    {
+        header('Content-Type: application/json');
 
-    $q = Booking::quotePrice($uid, $lounge, $ppl);
+        if (!is_logged_in()) {
+            echo json_encode(['ok' => false, 'error' => 'Sign in required']);
+            return;
+        }
 
-    try {
-      $bid = Booking::createBooking([
-        'user_id'        => $uid,
-        'guest_name'     => trim(($user['first_name'] ?? '').' '.($user['last_name'] ?? '')),
-        'guest_email'    => $user['email'] ?? null,
-        'lounge_id'      => $lid,
-        'flight_number'  => $flight,
-        'visit_date'     => $date,
-        'start_time'     => $start,
-        'end_time'       => $end,
-        'people_count'   => $ppl,
-        'method'         => $q['method'],
-        'unit_price_usd' => $q['unit'],
-        'total_usd'      => $q['total'],
-      ]);
+        $uid   = (int) current_user()['id'];
+        $lid   = (int) ($_POST['lounge_id'] ?? 0);
+        $date  = trim($_POST['visit_date'] ?? '');
+        $start = trim($_POST['start_time'] ?? '');
+        $end   = trim($_POST['end_time'] ?? '');
+        $ppl   = max(1, (int) ($_POST['people'] ?? 1));
 
-      $b = Booking::getBookingSummary($bid);
+        if (
+            !$lid ||
+            !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) ||
+            !preg_match('/^\d{2}:\d{2}$/', $start) ||
+            !preg_match('/^\d{2}:\d{2}$/', $end)
+        ) {
+            echo json_encode(['ok' => false, 'error' => 'Missing/invalid fields']);
+            return;
+        }
 
-      $qrUrl  = base_href('qr')     . '&code=' . urlencode($b['qr_code']);
-      $qrImg  = base_href('qr_img') . '&code=' . urlencode($b['qr_code']) . '&s=300';
+        $lounge = Booking::loungeById($lid);
+        if (!$lounge) {
+            echo json_encode(['ok' => false, 'error' => 'Lounge not found']);
+            return;
+        }
 
-      echo json_encode([
-        'ok'      => true,
-        'booking' => [
-          'id'        => $bid,
-          'title'     => $b['lounge_name'],
-          'airport'   => $b['airport_name'] . ' (' . $b['iata'] . ')',
-          'date'      => $b['visit_date'],
-          'start'     => substr($b['start_time'],0,5),
-          'end'       => substr($b['end_time'],0,5),
-          'people'    => $b['people_count'],
-          'method'    => $b['method'],
-          'total'     => (float)$b['total_usd'],
-          'qr_url'    => $qrUrl,   // landing url encoded in the QR
-          'qr_img'    => $qrImg,   // PNG QR (same-origin)
-          'contact'   => [
-            'name'    => $b['contact_name'],
-            'email'   => $b['contact_email'],
-            'user_id' => (int)$b['user_id'],
-          ],
-        ]
-      ]);
-    } catch (\Throwable $e) {
-      echo json_encode(['ok'=>false,'error'=>$e->getMessage()]);
-    }
-  }
+        $q = Booking::quotePrice($uid, $lounge, $ppl);
 
-    /**
-     * POST /?r=slots  { lounge_id:int, date:'YYYY-MM-DD' }
-     * Returns all slots for the lounge on that date with occupancy (used/capacity).
-     */
-    public function slots() {
-      header('Content-Type: application/json');
-
-      $lid  = (int)($_POST['lounge_id'] ?? 0);
-      $date = trim($_POST['date'] ?? '');
-
-      if ($lid <= 0 || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
-        echo json_encode(['ok'=>false, 'error'=>'Invalid lounge or date']); return;
-      }
-
-      $slots = Booking::slotsForDate($lid, $date);
-      if ($slots === null) {
-        echo json_encode(['ok'=>false, 'error'=>'Lounge not found']); return;
-      }
-
-      echo json_encode([
-        'ok'    => true,
-        'slots' => $slots['rows'],        // array of {label,start,end,used,cap,text}
-        'open'  => $slots['open_time'],   // 'HH:MM:SS'
-        'close' => $slots['close_time'],  // 'HH:MM:SS'
-        'cap'   => $slots['capacity'],    // integer capacity
-      ]);
+        echo json_encode([
+            'ok'            => true,
+            'method'        => $q['method'],
+            'unit'          => $q['unit'],
+            'total'         => $q['total'],
+            'plan'          => $q['plan'],
+            'needs_payment' => $q['total'] > 0,
+        ]);
     }
 
+    public function store()
+    {
+        header('Content-Type: application/json');
+
+        if (!is_logged_in()) {
+            echo json_encode(['ok' => false, 'error' => 'Sign in required']);
+            return;
+        }
+
+        $uid    = (int) current_user()['id'];
+        $user   = current_user();
+        $lid    = (int) ($_POST['lounge_id'] ?? 0);
+        $date   = trim($_POST['visit_date'] ?? '');
+        $start  = trim($_POST['start_time'] ?? '');
+        $end    = trim($_POST['end_time'] ?? '');
+        $ppl    = max(1, (int) ($_POST['people'] ?? 1));
+        $flight = strtoupper(trim($_POST['flight'] ?? ''));
+
+        if (
+            !$lid ||
+            !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) ||
+            !preg_match('/^\d{2}:\d{2}$/', $start) ||
+            !preg_match('/^\d{2}:\d{2}$/', $end)
+        ) {
+            echo json_encode(['ok' => false, 'error' => 'Missing/invalid fields']);
+            return;
+        }
+
+        $lounge = Booking::loungeById($lid);
+        if (!$lounge) {
+            echo json_encode(['ok' => false, 'error' => 'Lounge not found']);
+            return;
+        }
+
+        $q = Booking::quotePrice($uid, $lounge, $ppl);
+
+        try {
+            $bid = Booking::createBooking([
+                'user_id'        => $uid,
+                'guest_name'     => trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '')),
+                'guest_email'    => $user['email'] ?? null,
+                'lounge_id'      => $lid,
+                'flight_number'  => $flight,
+                'visit_date'     => $date,
+                'start_time'     => $start,
+                'end_time'       => $end,
+                'people_count'   => $ppl,
+                'method'         => $q['method'],
+                'unit_price_usd' => $q['unit'],
+                'total_usd'      => $q['total'],
+            ]);
+
+            $b = Booking::getBookingSummary($bid);
+
+            $qrUrl = base_href('qr') . '&code=' . urlencode($b['qr_code']);
+            $qrImg = base_href('qr_img') . '&code=' . urlencode($b['qr_code']) . '&s=300';
+
+            echo json_encode([
+                'ok'      => true,
+                'booking' => [
+                    'id'      => $bid,
+                    'title'   => $b['lounge_name'],
+                    'airport' => $b['airport_name'] . ' (' . $b['iata'] . ')',
+                    'date'    => $b['visit_date'],
+                    'start'   => substr($b['start_time'], 0, 5),
+                    'end'     => substr($b['end_time'], 0, 5),
+                    'people'  => $b['people_count'],
+                    'method'  => $b['method'],
+                    'total'   => (float) $b['total_usd'],
+                    'qr_url'  => $qrUrl,
+                    'qr_img'  => $qrImg,
+                    'contact' => [
+                        'name'    => $b['contact_name'],
+                        'email'   => $b['contact_email'],
+                        'user_id' => (int) $b['user_id'],
+                    ],
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
+        }
+    }
+
+    public function slots()
+    {
+        header('Content-Type: application/json');
+
+        $lid  = (int) ($_POST['lounge_id'] ?? 0);
+        $date = trim($_POST['date'] ?? '');
+
+        if ($lid <= 0 || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+            echo json_encode(['ok' => false, 'error' => 'Invalid lounge or date']);
+            return;
+        }
+
+        $slots = Booking::slotsForDate($lid, $date);
+        if ($slots === null) {
+            echo json_encode(['ok' => false, 'error' => 'Lounge not found']);
+            return;
+        }
+
+        echo json_encode([
+            'ok'    => true,
+            'slots' => $slots['rows'],
+            'open'  => $slots['open_time'],
+            'close' => $slots['close_time'],
+            'cap'   => $slots['capacity'],
+        ]);
+    }
 }

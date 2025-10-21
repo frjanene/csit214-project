@@ -1,6 +1,8 @@
 <!-- Dashboard page -->
 <?php
-  $u = $user ?? current_user();
+  $u = $user ?? (function_exists('current_user') ? current_user() : null);
+  $isGuest = empty($u) || (int)($u['id'] ?? 0) === 0;
+
   $greet = $u ? trim(($u['first_name'] ?? '').' '.($u['last_name'] ?? '')) : 'Guest';
 
   $activeBookings = (int)($metrics['active_bookings'] ?? 0);
@@ -10,7 +12,9 @@
   $planName  = $plan['name'] ?? 'Basic';
   $guestAllow= (int)($plan['guest_allowance'] ?? 0);
   $guestText = $guestAllow > 0 ? ("{$guestAllow} per visit") : 'Pay-per-use';
-  $memberId  = 'U'.str_pad((string)($u['id'] ?? 0), 6, '0', STR_PAD_LEFT);
+
+  // Member ID: clearer label for guests
+  $memberId  = $isGuest ? 'GUEST' : ('U'.str_pad((string)($u['id'] ?? 0), 6, '0', STR_PAD_LEFT));
 
   // Helper to format a compact date like "Tue, Dec 15"
   $fmtShortDate = function(string $ymd): string {
@@ -23,7 +27,7 @@
   <!-- Page header -->
   <div class="d-flex align-items-center justify-content-between mb-4">
     <div>
-      <h2 class="mb-1 fw-bold">Welcome back, <?= htmlspecialchars($greet ?: 'Guest') ?></h2>
+      <h2 class="mb-1 fw-bold">Welcome<?= $isGuest ? '' : ' back' ?>, <?= htmlspecialchars($greet ?: 'Guest') ?></h2>
       <div class="text-muted">Here's what's happening with your lounge access</div>
     </div>
     <a href="<?= base_href('find') ?>" class="btn btn-fda btn-fda-primary btn-fda-fit" style="height:36px; padding:0 14px;">
@@ -127,7 +131,12 @@
               </div>
             <?php endforeach; ?>
           <?php else: ?>
-            <div class="text-muted small">You have no upcoming visits. <a href="<?= base_href('find') ?>">Find a lounge</a> to book.</div>
+            <div class="text-muted small">
+              <?= $isGuest
+                ? 'No upcoming visits yet. You can still explore lounges below.'
+                : 'You have no upcoming visits. ' ?>
+              <a href="<?= base_href('find') ?>">Find a lounge</a> to book.
+            </div>
           <?php endif; ?>
         </div>
       </div>
@@ -139,12 +148,16 @@
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-start mb-3">
             <div class="">Membership Status</div>
-            <span class="status-pill status-ok">Active</span>
+            <span class="status-pill <?= $isGuest ? 'status-ok' : 'status-ok' ?>">
+              <?= $isGuest ? 'Guest' : 'Active' ?>
+            </span>
           </div>
 
           <div class="fw-bold mb-2"><?= htmlspecialchars($planName) ?> Membership</div>
           <div class="text-muted small mb-1">Member ID: <?= htmlspecialchars($memberId) ?></div>
-          <div class="text-muted small mb-1">Monthly Fee: <?= strtolower($planName)==='basic' ? 'Free' : ('$'.number_format((float)($plan['monthly_fee_usd'] ?? $plan['price_usd'] ?? 0), 2)) ?></div>
+          <div class="text-muted small mb-1">
+            Monthly Fee: <?= strtolower($planName)==='basic' ? 'Free' : ('$'.number_format((float)($plan['monthly_fee_usd'] ?? $plan['price_usd'] ?? 0), 2)) ?>
+          </div>
           <div class="text-muted small mb-3">Guest Allowance: <?= htmlspecialchars($guestText) ?></div>
 
           <div class="fw-semibold mb-2">Benefits</div>
@@ -160,7 +173,9 @@
             </li>
           </ul>
 
-          <a class="btn w-100 btn-outline-plain" href="<?= base_href('memberships') ?>">Manage Membership</a>
+          <a class="btn w-100 btn-outline-plain" href="<?= base_href('memberships') ?>">
+            <?= $isGuest ? 'See Membership Options' : 'Manage Membership' ?>
+          </a>
         </div>
       </div>
     </div>

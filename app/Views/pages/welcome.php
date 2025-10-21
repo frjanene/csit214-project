@@ -35,12 +35,12 @@
 
     <div class="hr-or my-2 w-100" style="max-width: var(--fda-btn-width);">OR</div>
 
-    <button class="btn btn-fda btn-fda-secondary"
-            data-bs-toggle="modal" data-bs-target="#authModal"
-            data-auth-tab="signin">
+    <a class="btn btn-fda btn-fda-secondary"
+      href="<?= base_href('dashboard') ?>">
       <img src="assets/img/guest-icon.svg" width="16" height="16" alt="">
       <span>Continue as Guest</span>
-    </button>
+    </a>
+
   </div>
 
   <!-- Why choose (page footer) -->

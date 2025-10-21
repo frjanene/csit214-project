@@ -2,8 +2,6 @@
   const modalEl = document.getElementById('bookingModal');
   if (!modalEl) return;
 
-  console.log('[booking] modal dataset on load:', JSON.parse(JSON.stringify(modalEl.dataset)));
-
   const $ = sel => modalEl.querySelector(sel);
 
   const backBtn      = $('.booking-back');
@@ -11,7 +9,7 @@
   const primaryLabel = $('#bk-primary-label');
 
   let activeStage = 1;
-  let needsPaymentFlag = true; // kept in sync as we learn more
+  let needsPaymentFlag = true; // kept in sync with server quote
   const selected = { loungeId: null, isPremium: 0 };
 
   // ---------- helpers ----------
@@ -26,9 +24,7 @@
     if (!m) return `${h} hour${h>1?'s':''}`;
     return `${h}.${String(Math.round(m/6)).slice(0,1)} hours`;
   };
-  const debounce = (fn, wait=400) => {
-    let t; return (...args) => { clearTimeout(t); t = setTimeout(()=>fn(...args), wait); };
-  };
+  const debounce = (fn, wait=350) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),wait); }; };
 
   const postForm = async (url, data) => {
     const resp = await fetch(url, {
@@ -62,9 +58,7 @@
   }
 
   function toggleStage1PaymentCard(show){
-    const card = modalEl.querySelector('.method-card');
-    if (!card) return;
-    card.classList.toggle('d-none', !show);
+    modalEl.querySelector('.method-card')?.classList.toggle('d-none', !show);
   }
 
   function toggleStage2PaymentForm(show){
@@ -78,14 +72,15 @@
     const payLbl = document.getElementById('btn-pay-label');
     if (!payBtn || !payLbl) return;
 
-    if (covered){
+    const total = +(modalEl.dataset.quotedTotal || 0);
+
+    if (covered || total === 0){
       payLbl.textContent = 'Confirm Booking';
       payBtn.disabled = false;
       payBtn.classList.remove('d-none');
     } else {
-      const price = +(modalEl.dataset.price || 0);
-      payLbl.textContent = `Pay $${price} - Complete Booking`;
-      payBtn.disabled = true; // will be enabled by validatePayment()
+      payLbl.textContent = `Pay $${Number(total).toFixed(0)} - Complete Booking`;
+      payBtn.disabled = true; // enabled by validatePayment()
       payBtn.classList.remove('d-none');
     }
   }
@@ -153,11 +148,10 @@
 
     const guests = +$('#bk-guests').value || 0;
     const people = 1 + guests;
-    const price  = +(modalEl.dataset.price || 0);
     const flight = ($('#bk-flight').value || '').toUpperCase();
     const depT   = $('#bk-dep-time').value ? ` (${ $('#bk-dep-time').value })` : '';
+    const ready  = !!(date && st && et && flight);
 
-    const ready = !!(date && st && et && flight);
     $('#bk-summary').classList.toggle('d-none', !ready);
 
     $('#sum-date').textContent   = date || '—';
@@ -166,9 +160,8 @@
     $('#sum-people').textContent = `${people} ${people>1?'people':'person'}`;
     $('#sum-occ').textContent    = $('#bk-slot-occ').textContent;
 
-    const covered = !needsPaymentFlag;
-    $('#sum-total').textContent  = covered ? '$0' : `$${(price*people).toFixed(0)}`;
-
+    // If fields are ready, fetch a fresh server quote and update totals/chips
+    if (isQuoteReady()) debouncedQuote();
     validateStage1();
   }
 
@@ -183,8 +176,8 @@
   }
 
   function validatePayment(){
-    if (!needsPaymentFlag) {
-      const bigPay = document.getElementById('btn-pay-stage2');
+    const bigPay = document.getElementById('btn-pay-stage2');
+    if (!needsPaymentFlag || +(modalEl.dataset.quotedTotal || 0) === 0) {
       if (bigPay) bigPay.disabled = false;
       return;
     }
@@ -193,14 +186,63 @@
            && /^\d{2}\/\d{2}$/.test($('#pay-exp')?.value.trim() || '')
            && /^\d{3,4}$/.test($('#pay-cvv')?.value.trim() || '')
            && $('#pay-addr')?.value.trim();
-    const bigPay = document.getElementById('btn-pay-stage2');
     if (bigPay) bigPay.disabled = !ok;
   }
 
+  // ---------- QUOTING ----------
+  const isQuoteReady = () => {
+    // Only quote when we have the fields server needs
+    return !!(selected.loungeId
+      && $('#bk-date').value
+      && $('#bk-start').value
+      && $('#bk-end').value);
+  };
+
+  async function requestQuoteAndUpdateUI() {
+    if (!isQuoteReady()) return;
+
+    const people = 1 + (+$('#bk-guests').value || 0);
+    const payload = {
+      lounge_id:  String(selected.loungeId || ''),
+      visit_date: $('#bk-date').value,
+      start_time: $('#bk-start').value,
+      end_time:   $('#bk-end').value,
+      people:     String(people),
+      plan_slug:        (modalEl.dataset.planSlug || 'basic'),
+      lounge_is_premium:String(selected.isPremium ? 1 : 0)
+    };
+
+    const q = await postForm('?r=booking_quote', payload);
+    if (!q.ok) return;
+
+    // Persist total and recompute flags/UI
+    modalEl.dataset.quotedTotal = String(q.total || 0);
+    needsPaymentFlag = (q.total > 0);
+
+    // Stage 1 price chip and summary total use the **server total**
+    const chip = $('#bk-price-chip');
+    if (chip) chip.textContent = (q.total > 0) ? `$${Number(q.total).toFixed(0)}` : 'FREE';
+
+    const sumTotal = $('#sum-total');
+    if (sumTotal) sumTotal.textContent = (q.total > 0) ? `$${Number(q.total).toFixed(0)}` : '$0';
+
+    // Plan note + payment card visibility reflect real coverage
+    const plan = q.plan || planFromDataset();
+    setPlanNote(plan, !needsPaymentFlag);
+    toggleStage1PaymentCard(needsPaymentFlag);
+
+    // Keep Stage 2 button + payment form in sync too (if user jumps immediately)
+    toggleStage2PaymentForm(needsPaymentFlag);
+    setupStage2Button(!needsPaymentFlag);
+    validatePayment();
+  }
+
+  const debouncedQuote = debounce(requestQuoteAndUpdateUI, 250);
+
   // ---------- stage 2 hydration ----------
   function hydrateStage2(){
-    const covered = !needsPaymentFlag;
-    const unitPrice = +(modalEl.dataset.price || 0);
+    const totalQuoted = +(modalEl.dataset.quotedTotal || 0);
+    const covered = (totalQuoted === 0);
 
     const title   = $('#bk-title').textContent;
     const airport = $('#bk-airport').textContent;
@@ -216,12 +258,23 @@
 
     $('#sum2-title').textContent   = title;
     $('#sum2-airport').textContent = airport;
-    $('#sum2-amount').textContent  = covered ? '0' : unitPrice.toString();
-    $('#sum2-date').textContent    = date;
-    $('#sum2-time').textContent    = time;
-    $('#sum2-duration').textContent= durLabel || '';
-    $('#sum2-people').textContent  = guests.replace(' people','').replace(' person','');
-    $('#sum2-flight').textContent  = flight;
+
+    const amtEl = $('#sum2-amount');
+    if (amtEl) {
+      if (covered) {
+        amtEl.textContent = 'FREE';
+        amtEl.classList.add('price-chip'); // treat as a chip when free
+      } else {
+        amtEl.textContent = `$${Number(totalQuoted).toFixed(0)}`;
+        amtEl.classList.remove('price-chip');
+      }
+    }
+
+    $('#sum2-date').textContent     = date;
+    $('#sum2-time').textContent     = time;
+    $('#sum2-duration').textContent = durLabel || '';
+    $('#sum2-people').textContent   = guests.replace(' people','').replace(' person','');
+    $('#sum2-flight').textContent   = flight;
     $('#sum2-flight-sub').textContent = depT ? `Departs ${depT}` : '';
 
     toggleStage2PaymentForm(!covered);
@@ -262,6 +315,7 @@
     $('#bk-occ').textContent     = btn.getAttribute('data-lounge-occ')    || '—';
     const unit = +(btn.getAttribute('data-lounge-price') || '0');
     modalEl.dataset.price = String(unit);
+    modalEl.dataset.quotedTotal = '0';
     const img = btn.getAttribute('data-lounge-img') || '';
     const imgEl = $('#bk-thumb'); if (imgEl) imgEl.src = img;
 
@@ -279,27 +333,20 @@
     $('#bk-after-flight').classList.add('d-none');
     $('#bk-flight-airport').textContent = 'Enter flight (e.g., FD123)…';
 
-    // membership coverage pre-check (so stage 1 can hide method card immediately)
+    // membership pre-check (UI hint only; real price comes from quote)
     const plan = planFromDataset();
-    const covered = loungeCoveredByPlan(plan, !!selected.isPremium);
-    needsPaymentFlag = !covered;
+    const coveredByPlan = loungeCoveredByPlan(plan, !!selected.isPremium);
+    needsPaymentFlag = !coveredByPlan;
 
-    // Stage-1 price chip reflects coverage
-    $('#bk-price-chip').textContent = covered ? '$0' : `$${unit}`;
+    // Stage-1 initial chip (will be replaced by server total once we quote)
+    $('#bk-price-chip').textContent = coveredByPlan ? 'FREE' : `$${unit}`;
 
-    console.log('[booking] open modal for lounge:', {
-      isPremium: !!selected.isPremium,
-      plan,
-      covered,
-      needsPaymentFlag
-    });
+    setPlanNote(plan, coveredByPlan);
+    toggleStage1PaymentCard(!coveredByPlan);
 
-    setPlanNote(plan, covered);
-    toggleStage1PaymentCard(!covered);
-
-    // Stage 2 defaults reflecting current coverage
-    toggleStage2PaymentForm(!covered);
-    setupStage2Button(covered);
+    // Stage 2 defaults
+    toggleStage2PaymentForm(!coveredByPlan);
+    setupStage2Button(coveredByPlan);
 
     validateStage1();
   });
@@ -359,6 +406,9 @@
       '11:00':'88/120','11:30':'90/120','12:00':'94/120',
       '12:30':'98/120','13:00':'105/120','13:30':'110/120','14:00':'89/120'
     });
+
+    // Once times are populated, try the first quote immediately if other fields ready
+    if (isQuoteReady()) debouncedQuote();
     updateSelectedSlot();
   };
 
@@ -371,48 +421,28 @@
 
   $('#bk-date').addEventListener('change', () => {
     if (($('#bk-flight').value || '').trim()) doFlightLookup();
+    else if (isQuoteReady()) debouncedQuote();
   });
 
   // ---------- reactive updates ----------
   ['bk-start','bk-end','bk-guests'].forEach(id=>{
-    $('#'+id).addEventListener('change', updateSelectedSlot);
+    $('#'+id).addEventListener('change', () => {
+      updateSelectedSlot();
+      if (isQuoteReady()) debouncedQuote();
+    });
   });
 
-  // ---------- Stage 1 primary -> server quote, then Stage 2 review ----------
+  // ---------- Stage 1 primary -> ensure we have the freshest quote, then Stage 2 ----------
   primaryBtn.addEventListener('click', async () => {
     if (activeStage !== 1) return;
 
-    const people = 1 + (+$('#bk-guests').value || 0);
-    const payload = {
-      lounge_id:  String(selected.loungeId || ''),
-      visit_date: $('#bk-date').value,
-      start_time: $('#bk-start').value,
-      end_time:   $('#bk-end').value,
-      people:     String(people),
-      // NEW: tell server what plan we have and lounge type
-      plan_slug:        (modalEl.dataset.planSlug || 'basic'),
-      lounge_is_premium:String(selected.isPremium ? 1 : 0)
-    };
-
-    console.log('[booking] quote payload:', payload);
-
-    const q = await postForm('?r=booking_quote', payload);
-    console.log('[booking] /booking_quote response:', q);
-    if (!q.ok) return;
-
-    // Trust the server: if total==0, no payment; if >0, payment required
-    needsPaymentFlag = !!q.needs_payment;
-
-    const plan = q.plan || planFromDataset();
-    setPlanNote(plan, !needsPaymentFlag);
-    toggleStage1PaymentCard(needsPaymentFlag);
+    // If we don't have a quote yet, fetch one now to avoid stale UI
+    if (!modalEl.dataset.quotedTotal) await requestQuoteAndUpdateUI();
 
     // Always show Stage 2 for review.
     hydrateStage2();
     showStage(2);
     validatePayment();
-
-    console.log('[booking] proceeding to stage 2; final flag:', needsPaymentFlag);
   });
 
   backBtn.addEventListener('click', () => showStage(Math.max(1, activeStage-1)));
@@ -433,12 +463,9 @@
       end_time:   $('#bk-end').value,
       people:     String(people),
       flight:     ($('#bk-flight').value || '').toUpperCase(),
-      // NEW: include membership + lounge type for server-side consistency
       plan_slug:        (modalEl.dataset.planSlug || 'basic'),
       lounge_is_premium:String(selected.isPremium ? 1 : 0)
     };
-
-    console.log('[booking] store payload:', payload, 'needsPaymentFlag=', needsPaymentFlag);
 
     const res = await postForm('?r=booking_store', payload);
     if (!res.ok) return;
@@ -448,28 +475,23 @@
     const amtEl = document.getElementById('done-amount');
     amtEl && (amtEl.textContent = (res.booking.total > 0) ? `$${Number(res.booking.total).toFixed(0)} Paid` : '$0.00');
 
-    // --- NEW: wire up real QR image and download/share actions ---
+    // QR image & actions
     const qrImgEl = modalEl.querySelector('.qr-img');
     if (qrImgEl) {
-      // Prefer same-origin PNG; fallback to landing URL if needed
       const qrImgUrl = res.booking.qr_img || '';
       qrImgEl.src = qrImgUrl || 'assets/img/demo-qr.png';
       qrImgEl.alt = 'Entry QR Code';
-
-      // Optional: click QR to open the deeplink/landing URL in a new tab
       if (res.booking.qr_url) {
         qrImgEl.style.cursor = 'pointer';
         qrImgEl.onclick = () => window.open(res.booking.qr_url, '_blank');
       }
     }
 
-    // Download button -> download the PNG
     const dlBtn = document.getElementById('btn-download-pass');
     if (dlBtn) {
       dlBtn.onclick = () => {
         const href = res.booking.qr_img || res.booking.qr_url;
         if (!href) return;
-
         const a = document.createElement('a');
         a.href = href;
         a.download = `FlyDreamAir-QR-${res.booking.id}.png`;
@@ -479,23 +501,13 @@
       };
     }
 
-    // Share button -> use Web Share if available; otherwise open the deeplink
     const shBtn = document.getElementById('btn-share-pass');
     if (shBtn) {
       shBtn.onclick = async () => {
         const shareUrl = res.booking.qr_url || res.booking.qr_img || location.href;
         const shareText = `Your lounge pass for ${res.booking.title} on ${res.booking.date} (${res.booking.start}–${res.booking.end}).`;
-
         if (navigator.share) {
-          try {
-            await navigator.share({
-              title: 'FlyDreamAir Lounge Pass',
-              text: shareText,
-              url: shareUrl
-            });
-          } catch (_) {
-            // user cancelled or share not possible — no-op
-          }
+          try { await navigator.share({ title: 'FlyDreamAir Lounge Pass', text: shareText, url: shareUrl }); } catch(_) {}
         } else {
           window.open(shareUrl, '_blank');
         }
@@ -503,7 +515,6 @@
     }
 
     showStage(3);
-
   });
 
   // payment inputs validation (only enforced if needed)

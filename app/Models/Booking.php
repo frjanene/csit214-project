@@ -55,25 +55,68 @@ class Booking extends Model {
   /**
    * Returns ['method' => 'membership'|'pay_per_use', 'unit' => float, 'total' => float]
    */
+    /**
+   * Returns:
+   *   [
+   *     'method' => 'membership' | 'pay_per_use',
+   *     'unit'   => float,   // unit price per extra guest / per person
+   *     'total'  => float,   // total user must pay
+   *     'plan'   => array,   // plan info
+   *     // extras (informational)
+   *     'extra_guests'   => int, // guests beyond allowance (charged)
+   *     'covered_guests' => int, // guests within allowance (free)
+   *   ]
+   */
   public static function quotePrice(int $userId, array $lounge, int $people): array {
-    $plan = self::userPlan($userId);
-    $isPremium = (int)$lounge['is_premium'] === 1;
+    $plan       = self::userPlan($userId);
+    $isPremium  = (int)$lounge['is_premium'] === 1;
+    $unit       = (float)$lounge['price_usd'];
+    $people     = max(1, $people); // 1 member + N guests
+    $allowGuests= (int)($plan['guest_allowance'] ?? 0);
 
-    $covered = false;
-    if ($isPremium) {
-      $covered = ($plan['premium_access'] ?? 'pay_per_use') === 'free';
-    } else {
-      $covered = ($plan['normal_access'] ?? 'pay_per_use') === 'free';
+    // Is the lounge entry itself covered by membership?
+    $memberFree = $isPremium
+      ? (($plan['premium_access'] ?? 'pay_per_use') === 'free')
+      : (($plan['normal_access']  ?? 'pay_per_use') === 'free');
+
+    // Default: pay-per-use for everyone
+    $method = 'pay_per_use';
+    $total  = $unit * $people;
+    $extra  = $people; // everyone is effectively "paying" in this branch
+    $coveredWithinAllowance = 0;
+
+    if ($memberFree) {
+      // Member (1) is free
+      $guests = max(0, $people - 1);
+
+      // Requirement: for PREMIUM lounges, only up to plan guest allowance is free;
+      // extra guests must pay. (Member remains free.)
+      if ($isPremium) {
+        $coveredWithinAllowance = min($allowGuests, $guests);
+        $extra = $guests - $coveredWithinAllowance; // paying guests
+        $total = $unit * max(0, $extra);
+      } else {
+        // Non-premium lounge covered by plan => treat everyone as free
+        // (If you want the allowance rule for normal lounges too, replace this block
+        // with the same math as the premium branch.)
+        $coveredWithinAllowance = $guests;
+        $extra = 0;
+        $total = 0.0;
+      }
+
+      $method = 'membership';
     }
 
-    if ($covered) {
-      return ['method'=>'membership', 'unit'=>0.0, 'total'=>0.0, 'plan'=>$plan];
-    }
-
-    $unit = (float)$lounge['price_usd'];
-    $total = $unit * max(1, $people);
-    return ['method'=>'pay_per_use', 'unit'=>$unit, 'total'=>$total, 'plan'=>$plan];
+    return [
+      'method'          => $method,
+      'unit'            => $unit,
+      'total'           => $total,
+      'plan'            => $plan,
+      'extra_guests'    => (int)$extra,
+      'covered_guests'  => (int)$coveredWithinAllowance,
+    ];
   }
+
 
     public static function createBooking(array $data): int {
     // accepts: user_id, guest_name, guest_email, lounge_id, flight_number, visit_date, start_time, end_time, people_count, method, unit_price_usd, total_usd

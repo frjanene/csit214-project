@@ -9,7 +9,7 @@
   $plan = $plan ?? ['slug'=>'basic','name'=>'Basic','guest_allowance'=>0,'normal_access'=>'pay_per_use','premium_access'=>'pay_per_use'];
   $planName  = $plan['name'] ?? 'Basic';
   $guestAllow= (int)($plan['guest_allowance'] ?? 0);
-  $guestText = $guestAllow > 0 ? ("Up to {$guestAllow} guest".($guestAllow>1?'s':'')) : 'Pay-per-use';
+  $guestText = $guestAllow > 0 ? ("{$guestAllow} per visit") : 'Pay-per-use';
   $memberId  = 'U'.str_pad((string)($u['id'] ?? 0), 6, '0', STR_PAD_LEFT);
 
   // Helper to format a compact date like "Tue, Dec 15"
@@ -144,7 +144,7 @@
 
           <div class="fw-bold mb-2"><?= htmlspecialchars($planName) ?> Membership</div>
           <div class="text-muted small mb-1">Member ID: <?= htmlspecialchars($memberId) ?></div>
-          <div class="text-muted small mb-1">Monthly Fee: <?= strtolower($planName)==='basic' ? 'Free' : 'Billed' ?></div>
+          <div class="text-muted small mb-1">Monthly Fee: <?= strtolower($planName)==='basic' ? 'Free' : ('$'.number_format((float)($plan['monthly_fee_usd'] ?? $plan['price_usd'] ?? 0), 2)) ?></div>
           <div class="text-muted small mb-3">Guest Allowance: <?= htmlspecialchars($guestText) ?></div>
 
           <div class="fw-semibold mb-2">Benefits</div>

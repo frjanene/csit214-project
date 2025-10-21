@@ -32,7 +32,8 @@ class DashboardController extends BaseController {
     }
 
     // Plan
-    $plan = Booking::userPlan($uid);
+    $plan = Membership::userCurrent($uid)
+      ?? ['slug'=>'basic','name'=>'Basic','monthly_fee_usd'=>0,'guest_allowance'=>0,'normal_access'=>'pay_per_use','premium_access'=>'pay_per_use'];
     $planSlug = strtolower($plan['slug'] ?? 'basic');
 
     $this->render('dashboard', 'Dashboard', 'main', [

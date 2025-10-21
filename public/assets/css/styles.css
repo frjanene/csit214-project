@@ -246,6 +246,68 @@ h5{font-weight:500;font-size:18px;}
 .legend-dot.full{background:#FECACA;border-color:#F87171;}
 .legend-dot.unavail{background:#E5E7EB;border-color:#D1D5DB;}
 
+/* --- Booking Modal: Occupancy Guide (matches UI & card colors) --- */
+.occ-guide{
+  background:#F7F7FB;                 /* subtle panel bg */
+  border:2px solid rgba(0,0,0,.08);    /* rounded, thicker like screenshot */
+  border-radius:16px;
+}
+
+.legend-badge{
+  width:40px; height:32px;             /* rounded badge with icon */
+  border-radius:10px;
+  display:inline-flex; align-items:center; justify-content:center;
+  font-weight:700;
+  border:1.5px solid transparent;
+}
+
+/* Use the same hues as the Find Lounges occupancy */
+.legend-badge.low     { background:#DCFCE7; border-color:#B9F8CF; color:#016630; }  /* occ-low */
+.legend-badge.mid     { background:#FFF5D6; border-color:#FEE685; color:#894B00; }  /* occ-mid */
+.legend-badge.high    { background:#FFE1E1; border-color:#FFB3B3; color:#9F2D00; }  /* occ-high */
+.legend-badge.full    { background:#FECACA; border-color:#F87171; color:#9F2D00; }
+.legend-badge.unavail { background:#E5E7EB; border-color:#D1D5DB; color:#6B7280; }
+
+.legend-label{ font-weight:700; line-height:1; }
+.legend-label.low  { color:#016630; }
+.legend-label.mid  { color:#894B00; }
+.legend-label.high { color:#9F2D00; }
+.legend-label.full { color:#9F2D00; }
+.legend-label.unavail { color:#6B7280; }
+
+.legend-sub{ color:var(--fda-text-muted); line-height:1; }
+
+
+/* Occupancy chip at top of modal — same colors as Find Lounges */
+.chip-occ{ border:1px solid #E5E7EB; background:#F3F4F6; color:var(--fda-text); }
+.chip-occ .inline-icon{ filter:none; } /* default, state colors below */
+
+/* <50% */
+.chip-occ.occ-low{
+  background:#DCFCE7; border-color:#B9F8CF; color:#016630;
+}
+.chip-occ.occ-low .inline-icon{
+  /* same green as find page */
+  filter:invert(20%) sepia(98%) saturate(1011%) hue-rotate(118deg) brightness(44%) contrast(105%);
+}
+
+/* 50–80% */
+.chip-occ.occ-mid{
+  background:#FFF5D6; border-color:#FEE685; color:#894B00;
+}
+.chip-occ.occ-mid .inline-icon{
+  filter:invert(23%) sepia(35%) saturate(2657%) hue-rotate(12deg) brightness(92%) contrast(94%);
+}
+
+/* >80% */
+.chip-occ.occ-high{
+  background:#FFE1E1; border-color:#FFB3B3; color:#9F2D00;
+}
+.chip-occ.occ-high .inline-icon{
+  filter:invert(19%) sepia(89%) saturate(2606%) hue-rotate(353deg) brightness(90%) contrast(111%);
+}
+
+
 .slot-card{background:#EFF6FF;border:1px solid #BEDBFF;border-radius:12px;}
 .slot-occ-pill{
   display:inline-flex;align-items:center;justify-content:center;padding:.2rem .6rem;border-radius:999px;

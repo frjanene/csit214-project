@@ -157,12 +157,8 @@ class BookingController extends BaseController
     {
         header('Content-Type: application/json');
 
-        if (!is_logged_in()) {
-            echo json_encode(['ok' => false, 'error' => 'Sign in required']);
-            return;
-        }
+        $uid   = is_logged_in() ? (int) current_user()['id'] : 0;
 
-        $uid   = (int) current_user()['id'];
         $lid   = (int) ($_POST['lounge_id'] ?? 0);
         $date  = trim($_POST['visit_date'] ?? '');
         $start = trim($_POST['start_time'] ?? '');
@@ -201,13 +197,10 @@ class BookingController extends BaseController
     {
         header('Content-Type: application/json');
 
-        if (!is_logged_in()) {
-            echo json_encode(['ok' => false, 'error' => 'Sign in required']);
-            return;
-        }
+        // Allow guests: use uid=0 and no contact info if not logged in
+        $uid    = is_logged_in() ? (int) current_user()['id'] : 0;
+        $user   = is_logged_in() ? current_user() : [];
 
-        $uid    = (int) current_user()['id'];
-        $user   = current_user();
         $lid    = (int) ($_POST['lounge_id'] ?? 0);
         $date   = trim($_POST['visit_date'] ?? '');
         $start  = trim($_POST['start_time'] ?? '');
@@ -236,10 +229,10 @@ class BookingController extends BaseController
         try {
             $bid = Booking::createBooking([
                 'user_id'        => $uid,
-                'guest_name'     => trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '')),
+                'guest_name'     => trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '')) ?: null,
                 'guest_email'    => $user['email'] ?? null,
                 'lounge_id'      => $lid,
-                'flight_number'  => $flight,
+                'flight_number'  => $flight ?: null,
                 'visit_date'     => $date,
                 'start_time'     => $start,
                 'end_time'       => $end,

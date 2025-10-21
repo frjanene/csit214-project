@@ -110,25 +110,96 @@
     }
   }
 
-  // ---------- END-TIME FILTER (hide < start) ----------
-  function filterEndOptions(){
-    const st = $('#bk-start').value;
-    const endSel = $('#bk-end');
-    if (!st || !endSel) return;
+  // ---------- Flight-aware limits ----------
+  const START_OFFSET_MIN = 180; // 3 hours before departure
+  const END_BEFORE_MIN   = 30;  // 30 minutes before departure
 
-    const minStart = hhmmToMinutes(st);
+  const getDepMinutes = () => {
+    const t = $('#bk-dep-time')?.value || '';
+    if (!/^\d{2}:\d{2}$/.test(t)) return null;
+    return hhmmToMinutes(t);
+  };
+
+  function filterStartOptions(){
+    const dep = getDepMinutes();
+    const startSel = $('#bk-start');
+    if (!startSel || dep === null) return;
+
+    const minStart = dep - START_OFFSET_MIN; // earliest allowed start
+    const maxStart = dep - END_BEFORE_MIN;   // must be strictly before this
+
     let firstValid = null;
-
-    [...endSel.options].forEach(opt => {
-      const valid = hhmmToMinutes(opt.value) >= minStart;
-      opt.hidden = !valid;         // don't display
-      opt.disabled = !valid;       // also make it unselectable
+    [...startSel.options].forEach(opt => {
+      const v = hhmmToMinutes(opt.value);
+      const valid = (v >= minStart) && (v < maxStart);
+      opt.hidden = !valid;
+      opt.disabled = !valid;
       if (valid && firstValid === null) firstValid = opt.value;
     });
 
-    // If current end is now invalid, snap to the first valid end
-    if (!endSel.value || hhmmToMinutes(endSel.value) < minStart) {
+    if (!startSel.value || startSel.options[startSel.selectedIndex]?.disabled) {
+      startSel.value = firstValid || '';
+    }
+  }
+
+  function filterEndOptions(){
+    const endSel = $('#bk-end');
+    const dep = getDepMinutes();
+    const st  = $('#bk-start').value;
+    if (!endSel || dep === null) return;
+
+    const minEnd = st ? hhmmToMinutes(st) + 1 : 0; // must be strictly > start
+    const maxEnd = dep - END_BEFORE_MIN;           // <= dep - 30m
+
+    let firstValid = null;
+    [...endSel.options].forEach(opt => {
+      const v = hhmmToMinutes(opt.value);
+      const valid = (v > minEnd - 1) && (v <= maxEnd);
+      opt.hidden = !valid;
+      opt.disabled = !valid;
+      if (valid && firstValid === null) firstValid = opt.value;
+    });
+
+    if (!endSel.value || endSel.options[endSel.selectedIndex]?.disabled) {
       endSel.value = firstValid || '';
+    }
+  }
+
+  function applyFlightTimeConstraints(){
+    filterStartOptions();
+    filterEndOptions();
+
+    // After filtering, ensure pair is valid (end > start).
+    const startSel = $('#bk-start');
+    const endSel   = $('#bk-end');
+    if (!startSel.value || !endSel.value) return;
+
+    const st = hhmmToMinutes(startSel.value);
+    const et = hhmmToMinutes(endSel.value);
+
+    if (et <= st) {
+      // Try to find a later end that is valid
+      let fixed = false;
+      for (const o of endSel.options) {
+        if (!o.disabled && hhmmToMinutes(o.value) > st) {
+          endSel.value = o.value;
+          fixed = true;
+          break;
+        }
+      }
+      // If not found, try moving start earlier within constraints so a later end exists
+      if (!fixed) {
+        const starts = [...startSel.options].filter(o=>!o.disabled).map(o=>hhmmToMinutes(o.value));
+        for (let i = starts.length - 1; i >= 0; i--) {
+          const candStart = starts[i];
+          const okEnd = [...endSel.options].find(o=>!o.disabled && hhmmToMinutes(o.value) > candStart);
+          if (okEnd) {
+            startSel.value = `${String(Math.floor(candStart/60)).padStart(2,'0')}:${String(candStart%60).padStart(2,'0')}`;
+            endSel.value = okEnd.value;
+            break;
+          }
+        }
+      }
     }
   }
 
@@ -156,9 +227,8 @@
     if (startSel.options.length) startSel.selectedIndex = 0;
     if (endSel.options.length)   endSel.selectedIndex   = Math.min(1, endSel.options.length-1);
 
-    // NEW: filter end options based on the initial start selection
-    filterEndOptions();
-
+    // Apply flight-based constraints first, then update UI
+    applyFlightTimeConstraints();
     updateSelectedSlot();
   }
 
@@ -182,10 +252,12 @@
     populateTimesFromArray(res.slots || []);
   }
 
-  const selectedOccText = (sel) => {
-    const txt = sel.selectedOptions[0]?.textContent || '';
-    const parts = txt.split('—');
-    return parts[1]?.trim() || '';
+  const getOccTextAndPct = (sel) => {
+    const txt = sel?.selectedOptions?.[0]?.textContent || '';
+    const occ = (txt.split('—')[1] || '').trim(); // "used/cap"
+    const m = occ.match(/^\s*(\d+)\s*\/\s*(\d+)\s*$/);
+    const pct = m ? ((+m[2] > 0) ? (+m[1] / +m[2]) * 100 : 0) : -1;
+    return { occ, pct };
   };
 
   function updateSelectedSlot(){
@@ -193,28 +265,40 @@
     const st   = $('#bk-start').value;
     let   et   = $('#bk-end').value; // ← make mutable
 
-    // Enforce: end time can’t be earlier than start time
-    if (st && et && hhmmToMinutes(et) < hhmmToMinutes(st)) {
+    // Enforce: end time must be after start time (not equal / not before)
+    if (st && et && hhmmToMinutes(et) <= hhmmToMinutes(st)) {
       const endSel = $('#bk-end');
       let fixed = false;
       for (const opt of endSel.options) {
         if (opt.disabled) continue;
-        if (hhmmToMinutes(opt.value) >= hhmmToMinutes(st)) {
+        if (hhmmToMinutes(opt.value) > hhmmToMinutes(st)) {
           endSel.value = opt.value;
           et = opt.value;
           fixed = true;
           break;
         }
       }
-      // If no valid option ≥ start exists, snap end to start
       if (!fixed) {
-        endSel.value = st;
-        et = st;
+        // leave as-is; constraints will have already limited choices
+        et = endSel.value;
       }
     }
 
     $('#bk-slot-text').textContent = (date && st && et) ? `${st} – ${et} on ${date}` : '—';
-    $('#bk-slot-occ').textContent  = selectedOccText($('#bk-end')) || selectedOccText($('#bk-start')) || '—';
+    {
+      const { occ: occStart, pct: pctStart } = getOccTextAndPct($('#bk-start'));
+      const { occ: occEnd,   pct: pctEnd   } = getOccTextAndPct($('#bk-end'));
+
+      // choose the higher percentage; if both invalid, show "—"
+      let chosenOcc = '—';
+      if (pctStart >= 0 || pctEnd >= 0) {
+        if (pctEnd > pctStart) chosenOcc = occEnd || '—';
+        else if (pctStart > pctEnd) chosenOcc = occStart || '—';
+        else chosenOcc = (occEnd || occStart || '—'); // tie -> prefer end if available
+      }
+
+      $('#bk-slot-occ').textContent = chosenOcc;
+    }
 
     const guests = +$('#bk-guests').value || 0;
     const people = 1 + guests;
@@ -230,7 +314,6 @@
     $('#sum-people').textContent = `${people} ${people>1?'people':'person'}`;
     $('#sum-occ').textContent    = $('#bk-slot-occ').textContent;
 
-    // If fields are ready, fetch a fresh server quote and update totals/chips
     if (isQuoteReady()) debouncedQuote();
     validateStage1();
   }
@@ -261,7 +344,6 @@
 
   // ---------- QUOTING ----------
   const isQuoteReady = () => {
-    // Only quote when we have the fields server needs
     return !!(selected.loungeId
       && $('#bk-date').value
       && $('#bk-start').value
@@ -285,23 +367,19 @@
     const q = await postForm('?r=booking_quote', payload);
     if (!q.ok) return;
 
-    // Persist total and recompute flags/UI
     modalEl.dataset.quotedTotal = String(q.total || 0);
     needsPaymentFlag = (q.total > 0);
 
-    // Stage 1 price chip and summary total use the **server total**
     const chip = $('#bk-price-chip');
     if (chip) chip.textContent = (q.total > 0) ? `$${Number(q.total).toFixed(0)}` : 'FREE';
 
     const sumTotal = $('#sum-total');
     if (sumTotal) sumTotal.textContent = (q.total > 0) ? `$${Number(q.total).toFixed(0)}` : '$0';
 
-    // Plan note + payment card visibility reflect real coverage
     const plan = q.plan || planFromDataset();
     setPlanNote(plan, !needsPaymentFlag);
     toggleStage1PaymentCard(needsPaymentFlag);
 
-    // Keep Stage 2 button + payment form in sync too (if user jumps immediately)
     toggleStage2PaymentForm(needsPaymentFlag);
     setupStage2Button(!needsPaymentFlag);
     validatePayment();
@@ -333,12 +411,15 @@
     if (amtEl) {
       if (covered) {
         amtEl.textContent = 'FREE';
-        amtEl.classList.add('price-chip'); // treat as a chip when free
+        amtEl.classList.add('price-chip');
       } else {
         amtEl.textContent = `$${Number(totalQuoted).toFixed(0)}`;
         amtEl.classList.remove('price-chip');
       }
     }
+
+    const sumPrem = document.getElementById('sum2-premium-chip');
+    if (sumPrem) sumPrem.classList.toggle('d-none', !selected.isPremium);
 
     $('#sum2-date').textContent     = date;
     $('#sum2-time').textContent     = time;
@@ -369,6 +450,18 @@
     }
   }
 
+  function setOccChipFromText(txt){
+    const wrap = document.getElementById('bk-occ-chip');
+    if (!wrap) return;
+    wrap.classList.remove('occ-low','occ-mid','occ-high');
+    const m = (txt || '').match(/^\s*(\d+)\s*\/\s*(\d+)\s*$/);
+    if (!m) return;
+    const used = +m[1], cap = +m[2];
+    const pct = cap > 0 ? (used / cap) * 100 : 0;
+    const cls = (pct < 50) ? 'occ-low' : (pct <= 80 ? 'occ-mid' : 'occ-high');
+    wrap.classList.add(cls);
+  }
+
   // ---------- bootstrap from card click ----------
   document.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-bs-target="#bookingModal"][data-lounge-title]');
@@ -379,10 +472,16 @@
     selected.loungeId  = parseInt(btn.getAttribute('data-lounge-id') || '0', 10);
     selected.isPremium = parseInt(btn.getAttribute('data-lounge-premium') || '0', 10);
 
+    modalEl.querySelectorAll('.premium-chip-modal').forEach(el => {
+      el.classList.toggle('d-none', !selected.isPremium);
+    });
+
     $('#bk-title').textContent   = btn.getAttribute('data-lounge-title')  || '';
     $('#bk-airport').textContent = btn.getAttribute('data-lounge-airport')|| '';
     $('#bk-hours').textContent   = btn.getAttribute('data-lounge-hours')  || '';
     $('#bk-occ').textContent     = btn.getAttribute('data-lounge-occ')    || '—';
+    setOccChipFromText($('#bk-occ').textContent);
+
     const unit = +(btn.getAttribute('data-lounge-price') || '0');
     modalEl.dataset.price = String(unit);
     modalEl.dataset.quotedTotal = '0';
@@ -403,18 +502,15 @@
     $('#bk-after-flight').classList.add('d-none');
     $('#bk-flight-airport').textContent = 'Enter flight (e.g., FD123)…';
 
-    // membership pre-check (UI hint only; real price comes from quote)
     const plan = planFromDataset();
     const coveredByPlan = loungeCoveredByPlan(plan, !!selected.isPremium);
     needsPaymentFlag = !coveredByPlan;
 
-    // Stage-1 initial chip (will be replaced by server total once we quote)
     $('#bk-price-chip').textContent = coveredByPlan ? 'FREE' : `$${unit}`;
 
     setPlanNote(plan, coveredByPlan);
     toggleStage1PaymentCard(!coveredByPlan);
 
-    // Stage 2 defaults
     toggleStage2PaymentForm(!coveredByPlan);
     setupStage2Button(coveredByPlan);
 
@@ -474,8 +570,8 @@
 
     // Load real slots + occupancy for this lounge & date
     await loadSlotsAndPopulate();
+    applyFlightTimeConstraints();
 
-    // Once times are populated, try the first quote immediately if other fields ready
     if (isQuoteReady()) debouncedQuote();
     updateSelectedSlot();
   };
@@ -488,27 +584,26 @@
   });
 
   $('#bk-date').addEventListener('change', async () => {
-    // If a flight has been entered, re-run flight lookup (it may change the date)
     if (($('#bk-flight').value || '').trim()) {
       await doFlightLookup();
     } else {
-      // Otherwise just load slots for the picked date
       await loadSlotsAndPopulate();
+      applyFlightTimeConstraints();
       if (isQuoteReady()) debouncedQuote();
       updateSelectedSlot();
     }
   });
 
   // ---------- reactive updates ----------
-  // Start: filter end options first, then update + quote
   $('#bk-start').addEventListener('change', () => {
-    filterEndOptions();           // hide earlier-than-start end times
+    applyFlightTimeConstraints();
     updateSelectedSlot();
     if (isQuoteReady()) debouncedQuote();
   });
 
   ['bk-end','bk-guests'].forEach(id=>{
     $('#'+id).addEventListener('change', () => {
+      applyFlightTimeConstraints();
       updateSelectedSlot();
       if (isQuoteReady()) debouncedQuote();
     });
@@ -518,10 +613,8 @@
   primaryBtn.addEventListener('click', async () => {
     if (activeStage !== 1) return;
 
-    // If we don't have a quote yet, fetch one now to avoid stale UI
     if (!modalEl.dataset.quotedTotal) await requestQuoteAndUpdateUI();
 
-    // Always show Stage 2 for review.
     hydrateStage2();
     showStage(2);
     validatePayment();
@@ -557,12 +650,10 @@
     const amtEl = document.getElementById('done-amount');
     amtEl && (amtEl.textContent = (res.booking.total > 0) ? `$${Number(res.booking.total).toFixed(0)} Paid` : '$0.00');
 
-    // QR image & actions — always show the image asset (ignore server for src)
     const qrImgEl = modalEl.querySelector('.qr-img');
     if (qrImgEl) {
       qrImgEl.src = 'assets/img/demo-qr.png';
       qrImgEl.alt = 'Entry QR Code';
-      // optional: still allow clicking to open server deeplink if available
       if (res.booking.qr_url) {
         qrImgEl.style.cursor = 'pointer';
         qrImgEl.onclick = () => window.open(res.booking.qr_url, '_blank');
@@ -575,7 +666,6 @@
     const dlBtn = document.getElementById('btn-download-pass');
     if (dlBtn) {
       dlBtn.onclick = () => {
-        // keep download using local image (since we’re always displaying the asset)
         const href = 'assets/img/demo-qr.png';
         const a = document.createElement('a');
         a.href = href;

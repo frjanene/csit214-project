@@ -68,16 +68,22 @@ class Booking extends Model
         $people      = max(1, $people);
         $allowGuests = (int) ($plan['guest_allowance'] ?? 0);
 
+        $isGuest = $userId === 0;
+
         $memberFree = $isPremium
             ? (($plan['premium_access'] ?? 'pay_per_use') === 'free')
-            : (($plan['normal_access']  ?? 'pay_per_use') === 'free');
+            : (($plan['normal_access'] ?? 'pay_per_use') === 'free');
 
         $method = 'pay_per_use';
-        $total  = $unit * $people;
+        $total  = $unit * $people; 
         $extra  = $people;
         $coveredWithinAllowance = 0;
 
-        if ($memberFree) {
+        if ($isGuest) {
+            $total = $unit * $people;
+            $method = 'pay_per_use';
+        } elseif ($memberFree) {
+
             $guests = max(0, $people - 1);
 
             if ($isPremium) {
@@ -85,9 +91,15 @@ class Booking extends Model
                 $extra = $guests - $coveredWithinAllowance;
                 $total = $unit * max(0, $extra);
             } else {
-                $coveredWithinAllowance = $guests;
-                $extra = 0;
-                $total = 0.0;
+                if ($guests > 0) {
+                    $coveredWithinAllowance = min($allowGuests, $guests);
+                    $extra = $guests - $coveredWithinAllowance;
+                    $total = $unit * max(0, $extra);
+                } else {
+                    $coveredWithinAllowance = 0;
+                    $extra = 0;
+                    $total = 0.0; 
+                }
             }
 
             $method = 'membership';

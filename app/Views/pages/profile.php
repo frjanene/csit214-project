@@ -302,7 +302,13 @@ $dobValue = $user['dob'] ?? '';
                 <label class="form-label small">Preferred Currency</label>
                 <select class="form-select pref-select" name="prefs[currency]">
                   <?php
-                    $currs = ['USD'=>'USD - US Dollar','EUR'=>'EUR - Euro','NGN'=>'NGN - Naira'];
+                    $currs = [
+                      'USD' => 'USD - US Dollar',
+                      'EUR' => 'EUR - Euro',
+                      'NGN' => 'NGN - Naira',
+                      'AUD' => 'AUD - Australian Dollar',
+                      'SGD' => 'SGD - Singapore Dollar',
+                    ];
                     $ccur = $prefs['currency'] ?? 'USD';
                     foreach ($currs as $code=>$label) {
                       $sel = $code === $ccur ? 'selected' : '';

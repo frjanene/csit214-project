@@ -73,17 +73,18 @@ $__plan =
               <div class="text-muted small" id="bk-airport">—</div>
 
               <div class="d-flex align-items-center gap-2 mt-2 flex-wrap">
-                <span class="chip chip-soft">
-                  <img src="assets/img/guest-icon.svg" class="inline-icon tint-muted me-1" alt="">
+                <span id="bk-occ-chip" class="chip chip-occ">
+                  <img src="assets/img/guest-icon.svg" class="inline-icon me-1" alt="">
                   <span id="bk-occ">—</span>
                 </span>
+
                 <span class="chip chip-soft">
                   <img src="assets/img/time-icon.svg" class="inline-icon tint-muted me-1" alt="">
                   <span id="bk-hours">—</span>
                 </span>
               </div>
 
-              <span class="premium-chip-modal mt-2">⭐ Premium Lounge</span>
+              <span class="premium-chip-modal mt-2 d-none" id="bk-premium-chip">⭐ Premium Lounge</span>
               <div class="text-muted small mt-2" id="bk-plan-note">Basic member · pay-per-use for all lounges</div>
             </div>
           </div>
@@ -172,18 +173,69 @@ $__plan =
               </div>
             </div>
 
-            <div class="occ-guide box-muted p-3 rounded-3 mb-3">
-              <div class="small fw-semibold mb-2">
-                <i class="fa-regular fa-circle-question me-1"></i> Lounge Occupancy Guide
+            <div class="occ-guide p-3 rounded-4 mb-3">
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <i class="fa-solid fa-circle-info"></i>
+                <span class="fw-semibold">Lounge Occupancy Guide</span>
               </div>
-              <div class="d-flex flex-wrap gap-3 small">
-                <div class="d-flex align-items-center gap-2"><span class="legend-dot low"></span><span>Low &lt;50%</span></div>
-                <div class="d-flex align-items-center gap-2"><span class="legend-dot mid"></span><span>Medium 50–80%</span></div>
-                <div class="d-flex align-items-center gap-2"><span class="legend-dot high"></span><span>Busy 80–100%</span></div>
-                <div class="d-flex align-items-center gap-2"><span class="legend-dot full"></span><span>Full 100%</span></div>
-                <div class="d-flex align-items-center gap-2"><span class="legend-dot unavail"></span><span>Unavailable</span></div>
+
+              <div class="d-flex flex-wrap align-items-center gap-4 small">
+                <!-- Low -->
+                <div class="legend-item d-flex align-items-center gap-2">
+                  <span class="legend-badge low">
+                    <i class="fa-solid fa-check"></i>
+                  </span>
+                  <div>
+                    <div class="legend-label low">Low</div>
+                    <div class="legend-sub">&lt;50%</div>
+                  </div>
+                </div>
+
+                <!-- Medium -->
+                <div class="legend-item d-flex align-items-center gap-2">
+                  <span class="legend-badge mid">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                  </span>
+                  <div>
+                    <div class="legend-label mid">Medium</div>
+                    <div class="legend-sub">50–80%</div>
+                  </div>
+                </div>
+
+                <!-- Busy -->
+                <div class="legend-item d-flex align-items-center gap-2">
+                  <span class="legend-badge high">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                  </span>
+                  <div>
+                    <div class="legend-label high">Busy</div>
+                    <div class="legend-sub">80–100%</div>
+                  </div>
+                </div>
+
+                <!-- Full -->
+                <div class="legend-item d-flex align-items-center gap-2">
+                  <span class="legend-badge full">
+                    <i class="fa-solid fa-xmark"></i>
+                  </span>
+                  <div>
+                    <div class="legend-label full">Full</div>
+                    <div class="legend-sub">100%</div>
+                  </div>
+                </div>
+
+                <!-- Unavailable -->
+                <div class="legend-item d-flex align-items-center gap-2">
+                  <span class="legend-badge unavail">
+                    <i class="fa-solid fa-minus"></i>
+                  </span>
+                  <div>
+                    <div class="legend-label unavail">Unavailable</div>
+                  </div>
+                </div>
               </div>
             </div>
+
 
             <div class="selected-slot card slot-card mb-3">
               <div class="card-body d-flex justify-content-between align-items-center">
@@ -236,7 +288,7 @@ $__plan =
                 <div>
                   <div class="fw-normal fs-6" id="sum2-title">—</div>
                   <div class="text-muted small" id="sum2-airport">—</div>
-                  <span class="premium-chip-modal mt-2 d-inline-block">⭐ Premium Lounge</span>
+                  <span class="premium-chip-modal mt-2 d-inline-block d-none" id="sum2-premium-chip">⭐ Premium Lounge</span>
                 </div>
                 <div class="text-end">
                   <div class="sum-amount" id="sum2-amount">—</div>
